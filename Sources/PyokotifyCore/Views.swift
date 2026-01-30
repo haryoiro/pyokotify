@@ -128,10 +128,10 @@ public class SpeechBubbleView: NSView {
     }
 }
 
-// MARK: - Pokkofy View
+// MARK: - Pyokotify View
 
 /// メインのキャラクター表示ビュー
-public class PokkofyView: NSView {
+public class PyokotifyView: NSView {
     private let imageView: NSImageView
     private var bubbleView: SpeechBubbleView?
     private let direction: PeekDirection
@@ -248,10 +248,10 @@ public class PokkofyView: NSView {
     }
 }
 
-// MARK: - Pokkofy Window
+// MARK: - Pyokotify Window
 
 /// 透明なオーバーレイウィンドウ
-public class PokkofyWindow: NSWindow {
+public class PyokotifyWindow: NSWindow {
     public init(contentRect: NSRect, clickable: Bool) {
         super.init(
             contentRect: contentRect,

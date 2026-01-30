@@ -2,18 +2,18 @@ import AppKit
 import ApplicationServices
 import Foundation
 
-// MARK: - Pokkofy Controller
+// MARK: - Pyokotify Controller
 
 /// アプリケーションのメインコントローラー
-public class PokkofyController {
-    private let config: PokkofyConfig
-    private var window: PokkofyWindow?
+public class PyokotifyController {
+    private let config: PyokotifyConfig
+    private var window: PyokotifyWindow?
     private let originalImage: NSImage
     private let fallbackCallerApp: NSRunningApplication?
     private var hideTimer: DispatchWorkItem?
     private var currentDirection: PeekDirection
 
-    public init(config: PokkofyConfig, image: NSImage, fallbackCallerApp: NSRunningApplication?) {
+    public init(config: PyokotifyConfig, image: NSImage, fallbackCallerApp: NSRunningApplication?) {
         self.config = config
         self.originalImage = image
         self.fallbackCallerApp = fallbackCallerApp
@@ -31,10 +31,10 @@ public class PokkofyController {
         let displaySize = calculateDisplaySize(screenFrame: screenFrame)
         let initialFrame = getInitialFrame(screenFrame: screenFrame, displaySize: displaySize)
 
-        window = PokkofyWindow(contentRect: initialFrame, clickable: config.clickable)
+        window = PyokotifyWindow(contentRect: initialFrame, clickable: config.clickable)
 
         let rotatedImage = getRotatedImage()
-        let view = PokkofyView(image: rotatedImage, message: config.message, direction: currentDirection)
+        let view = PyokotifyView(image: rotatedImage, message: config.message, direction: currentDirection)
         view.onClick = { [weak self] in self?.handleClick() }
 
         window?.contentView = view
@@ -46,7 +46,7 @@ public class PokkofyController {
 
 // MARK: - Image & Size Calculation
 
-extension PokkofyController {
+extension PyokotifyController {
     private func getRotatedImage() -> NSImage {
         originalImage.rotated(byDegrees: currentDirection.rotationDegrees)
     }
@@ -108,7 +108,7 @@ extension PokkofyController {
 
 // MARK: - Animation
 
-extension PokkofyController {
+extension PyokotifyController {
     private func animateIn(completion: @escaping () -> Void) {
         guard let window = window, let screen = NSScreen.main else { return }
 
@@ -188,7 +188,7 @@ extension PokkofyController {
 
 // MARK: - Timer & Random Mode
 
-extension PokkofyController {
+extension PyokotifyController {
     private func scheduleHide() {
         hideTimer?.cancel()
         let workItem = DispatchWorkItem { [weak self] in
@@ -223,7 +223,7 @@ extension PokkofyController {
         let displaySize = calculateDisplaySize(screenFrame: screenFrame)
 
         let rotatedImage = getRotatedImage()
-        let view = PokkofyView(image: rotatedImage, message: config.message, direction: currentDirection)
+        let view = PyokotifyView(image: rotatedImage, message: config.message, direction: currentDirection)
         view.onClick = { [weak self] in self?.handleClick() }
         window.contentView = view
 
@@ -236,7 +236,7 @@ extension PokkofyController {
 
 // MARK: - Click Handling & App Focus
 
-extension PokkofyController {
+extension PyokotifyController {
     private func handleClick() {
         hideTimer?.cancel()
 
@@ -297,8 +297,8 @@ extension PokkofyController {
 
 // MARK: - App Delegate
 
-public class PokkofyAppDelegate: NSObject, NSApplicationDelegate {
-    private var controller: PokkofyController?
+public class PyokotifyAppDelegate: NSObject, NSApplicationDelegate {
+    private var controller: PyokotifyController?
     private var callerApp: NSRunningApplication?
 
     override public init() {
@@ -307,7 +307,7 @@ public class PokkofyAppDelegate: NSObject, NSApplicationDelegate {
     }
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
-        guard let config = PokkofyConfig.fromArguments() else {
+        guard let config = PyokotifyConfig.fromArguments() else {
             NSApp.terminate(nil)
             return
         }
@@ -319,7 +319,7 @@ public class PokkofyAppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        controller = PokkofyController(config: config, image: image, fallbackCallerApp: callerApp)
+        controller = PyokotifyController(config: config, image: image, fallbackCallerApp: callerApp)
         controller?.run()
     }
 }

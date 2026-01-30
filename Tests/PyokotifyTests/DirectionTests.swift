@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 
-@testable import PokkofyCore
+@testable import PyokotifyCore
 
 @Suite("Direction Tests")
 struct DirectionTests {

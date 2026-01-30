@@ -1,13 +1,13 @@
 import Foundation
 import Testing
 
-@testable import PokkofyCore
+@testable import PyokotifyCore
 
 @Suite("Config Tests")
 struct ConfigTests {
     @Test("デフォルト値が正しく設定される")
     func defaultValues() {
-        let config = PokkofyConfig(imagePath: "/path/to/image.png")
+        let config = PyokotifyConfig(imagePath: "/path/to/image.png")
 
         #expect(config.imagePath == "/path/to/image.png")
         #expect(config.displayDuration == 3.0)
@@ -27,7 +27,7 @@ struct ConfigTests {
 
     @Test("画像パスのみの引数を正しく解析")
     func parseImagePathOnly() throws {
-        let result = PokkofyConfig.parse(arguments: ["pokkofy", "/path/to/image.png"])
+        let result = PyokotifyConfig.parse(arguments: ["pyokotify", "/path/to/image.png"])
         let config = try result.get()
 
         #expect(config.imagePath == "/path/to/image.png")
@@ -35,7 +35,7 @@ struct ConfigTests {
 
     @Test("durationオプションを正しく解析")
     func parseDuration() throws {
-        let result = PokkofyConfig.parse(arguments: ["pokkofy", "image.png", "-d", "5.0"])
+        let result = PyokotifyConfig.parse(arguments: ["pyokotify", "image.png", "-d", "5.0"])
         let config = try result.get()
 
         #expect(config.displayDuration == 5.0)
@@ -43,7 +43,7 @@ struct ConfigTests {
 
     @Test("animationオプションを正しく解析")
     func parseAnimation() throws {
-        let result = PokkofyConfig.parse(arguments: ["pokkofy", "image.png", "--animation", "0.8"])
+        let result = PyokotifyConfig.parse(arguments: ["pyokotify", "image.png", "--animation", "0.8"])
         let config = try result.get()
 
         #expect(config.animationDuration == 0.8)
@@ -51,7 +51,7 @@ struct ConfigTests {
 
     @Test("peekオプションを正しく解析")
     func parsePeek() throws {
-        let result = PokkofyConfig.parse(arguments: ["pokkofy", "image.png", "-p", "300"])
+        let result = PyokotifyConfig.parse(arguments: ["pyokotify", "image.png", "-p", "300"])
         let config = try result.get()
 
         #expect(config.peekHeight == 300)
@@ -59,7 +59,7 @@ struct ConfigTests {
 
     @Test("marginオプションを正しく解析")
     func parseMargin() throws {
-        let result = PokkofyConfig.parse(arguments: ["pokkofy", "image.png", "-m", "100"])
+        let result = PyokotifyConfig.parse(arguments: ["pyokotify", "image.png", "-m", "100"])
         let config = try result.get()
 
         #expect(config.rightMargin == 100)
@@ -67,7 +67,7 @@ struct ConfigTests {
 
     @Test("no-clickオプションを正しく解析")
     func parseNoClick() throws {
-        let result = PokkofyConfig.parse(arguments: ["pokkofy", "image.png", "--no-click"])
+        let result = PyokotifyConfig.parse(arguments: ["pyokotify", "image.png", "--no-click"])
         let config = try result.get()
 
         #expect(config.clickable == false)
@@ -75,7 +75,7 @@ struct ConfigTests {
 
     @Test("randomオプションを正しく解析")
     func parseRandom() throws {
-        let result = PokkofyConfig.parse(arguments: ["pokkofy", "image.png", "-r"])
+        let result = PyokotifyConfig.parse(arguments: ["pyokotify", "image.png", "-r"])
         let config = try result.get()
 
         #expect(config.randomMode == true)
@@ -83,7 +83,7 @@ struct ConfigTests {
 
     @Test("random-directionオプションを正しく解析")
     func parseRandomDirection() throws {
-        let result = PokkofyConfig.parse(arguments: ["pokkofy", "image.png", "--random-direction"])
+        let result = PyokotifyConfig.parse(arguments: ["pyokotify", "image.png", "--random-direction"])
         let config = try result.get()
 
         #expect(config.randomDirection == true)
@@ -91,7 +91,7 @@ struct ConfigTests {
 
     @Test("min/maxオプションを正しく解析")
     func parseMinMax() throws {
-        let result = PokkofyConfig.parse(arguments: ["pokkofy", "image.png", "--min", "60", "--max", "300"])
+        let result = PyokotifyConfig.parse(arguments: ["pyokotify", "image.png", "--min", "60", "--max", "300"])
         let config = try result.get()
 
         #expect(config.randomMinInterval == 60)
@@ -100,7 +100,7 @@ struct ConfigTests {
 
     @Test("textオプションを正しく解析")
     func parseText() throws {
-        let result = PokkofyConfig.parse(arguments: ["pokkofy", "image.png", "-t", "Hello!"])
+        let result = PyokotifyConfig.parse(arguments: ["pyokotify", "image.png", "-t", "Hello!"])
         let config = try result.get()
 
         #expect(config.message == "Hello!")
@@ -108,7 +108,7 @@ struct ConfigTests {
 
     @Test("callerオプションを正しく解析")
     func parseCaller() throws {
-        let result = PokkofyConfig.parse(arguments: ["pokkofy", "image.png", "-c", "vscode"])
+        let result = PyokotifyConfig.parse(arguments: ["pyokotify", "image.png", "-c", "vscode"])
         let config = try result.get()
 
         #expect(config.callerApp == "vscode")
@@ -116,7 +116,7 @@ struct ConfigTests {
 
     @Test("cwdオプションを正しく解析")
     func parseCwd() throws {
-        let result = PokkofyConfig.parse(arguments: ["pokkofy", "image.png", "--cwd", "/path/to/project"])
+        let result = PyokotifyConfig.parse(arguments: ["pyokotify", "image.png", "--cwd", "/path/to/project"])
         let config = try result.get()
 
         #expect(config.cwd == "/path/to/project")
@@ -124,8 +124,8 @@ struct ConfigTests {
 
     @Test("複合オプションを正しく解析")
     func parseMultipleOptions() throws {
-        let result = PokkofyConfig.parse(arguments: [
-            "pokkofy", "image.png",
+        let result = PyokotifyConfig.parse(arguments: [
+            "pyokotify", "image.png",
             "-d", "5",
             "-p", "300",
             "-t", "タスク完了！",
@@ -147,7 +147,7 @@ struct ConfigTests {
 
     @Test("画像パスがない場合はエラー")
     func missingImagePath() {
-        let result = PokkofyConfig.parse(arguments: ["pokkofy"])
+        let result = PyokotifyConfig.parse(arguments: ["pyokotify"])
 
         switch result {
         case .success:
@@ -159,7 +159,7 @@ struct ConfigTests {
 
     @Test("ヘルプオプションでhelpRequestedエラー")
     func helpOption() {
-        let result = PokkofyConfig.parse(arguments: ["pokkofy", "-h"])
+        let result = PyokotifyConfig.parse(arguments: ["pyokotify", "-h"])
 
         switch result {
         case .success:
@@ -174,7 +174,7 @@ struct ConfigTests {
 struct BundleIdMappingTests {
     @Test("VSCode の Bundle ID を正しく取得")
     func vscodeMapping() {
-        var config = PokkofyConfig(imagePath: "test.png")
+        var config = PyokotifyConfig(imagePath: "test.png")
         config.callerApp = "vscode"
 
         #expect(config.getCallerBundleId() == "com.microsoft.VSCode")
@@ -182,7 +182,7 @@ struct BundleIdMappingTests {
 
     @Test("iTerm の Bundle ID を正しく取得")
     func itermMapping() {
-        var config = PokkofyConfig(imagePath: "test.png")
+        var config = PyokotifyConfig(imagePath: "test.png")
         config.callerApp = "iTerm.app"
 
         #expect(config.getCallerBundleId() == "com.googlecode.iterm2")
@@ -190,7 +190,7 @@ struct BundleIdMappingTests {
 
     @Test("Ghostty の Bundle ID を正しく取得")
     func ghosttyMapping() {
-        var config = PokkofyConfig(imagePath: "test.png")
+        var config = PyokotifyConfig(imagePath: "test.png")
         config.callerApp = "ghostty"
 
         #expect(config.getCallerBundleId() == "com.mitchellh.ghostty")
@@ -198,7 +198,7 @@ struct BundleIdMappingTests {
 
     @Test("Terminal.app の Bundle ID を正しく取得")
     func terminalMapping() {
-        var config = PokkofyConfig(imagePath: "test.png")
+        var config = PyokotifyConfig(imagePath: "test.png")
         config.callerApp = "Apple_Terminal"
 
         #expect(config.getCallerBundleId() == "com.apple.Terminal")
@@ -206,7 +206,7 @@ struct BundleIdMappingTests {
 
     @Test("未知のターミナルは nil を返す")
     func unknownTerminal() {
-        var config = PokkofyConfig(imagePath: "test.png")
+        var config = PyokotifyConfig(imagePath: "test.png")
         config.callerApp = "unknown_terminal"
 
         #expect(config.getCallerBundleId() == nil)
@@ -214,7 +214,7 @@ struct BundleIdMappingTests {
 
     @Test("callerApp が nil の場合は nil を返す")
     func nilCallerApp() {
-        let config = PokkofyConfig(imagePath: "test.png")
+        let config = PyokotifyConfig(imagePath: "test.png")
 
         #expect(config.getCallerBundleId() == nil)
     }
