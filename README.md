@@ -84,6 +84,8 @@ pyokotify ~/Pictures/zundamon.png
 | `--random-direction` | ランダムな方向（下・左・右）から出現 | - |
 | `--min <秒>` | ランダムモードの最小間隔 | 30秒 |
 | `--max <秒>` | ランダムモードの最大間隔 | 120秒 |
+| `--snooze <回数>` | クリックされなかった時の再通知回数 | 0（無効） |
+| `--snooze-interval <秒>` | 再通知までの間隔 | 30秒 |
 | `-h`, `--help` | ヘルプを表示 | - |
 
 ### 使用例
@@ -106,6 +108,9 @@ pyokotify ~/Pictures/zundamon.png --random-direction
 
 # ランダム間隔＋ランダム方向
 pyokotify ~/Pictures/zundamon.png -r --random-direction --min 60 --max 300
+
+# スヌーズ機能：クリックされなかったら10秒後に再通知（最大3回）
+pyokotify ~/Pictures/zundamon.png --snooze 3 --snooze-interval 10
 ```
 
 ## 活用例

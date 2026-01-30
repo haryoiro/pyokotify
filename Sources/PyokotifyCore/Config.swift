@@ -18,6 +18,8 @@ public struct PyokotifyConfig {
     public var message: String?
     public var callerApp: String?
     public var cwd: String?
+    public var snoozeCount: Int
+    public var snoozeInterval: TimeInterval
 
     public init(
         imagePath: String,
@@ -33,7 +35,9 @@ public struct PyokotifyConfig {
         direction: PeekDirection = .bottom,
         message: String? = nil,
         callerApp: String? = nil,
-        cwd: String? = nil
+        cwd: String? = nil,
+        snoozeCount: Int = 0,
+        snoozeInterval: TimeInterval = 30
     ) {
         self.imagePath = imagePath
         self.displayDuration = displayDuration
@@ -49,6 +53,8 @@ public struct PyokotifyConfig {
         self.message = message
         self.callerApp = callerApp
         self.cwd = cwd
+        self.snoozeCount = snoozeCount
+        self.snoozeInterval = snoozeInterval
     }
 }
 
@@ -149,6 +155,16 @@ extension PyokotifyConfig {
                     config.cwd = arguments[i + 1]
                     i += 1
                 }
+            case "--snooze":
+                if i + 1 < arguments.count, let count = Int(arguments[i + 1]) {
+                    config.snoozeCount = count
+                    i += 1
+                }
+            case "--snooze-interval":
+                if i + 1 < arguments.count, let interval = Double(arguments[i + 1]) {
+                    config.snoozeInterval = interval
+                    i += 1
+                }
             default:
                 break
             }
@@ -195,6 +211,8 @@ extension PyokotifyConfig {
                 --random-direction     ランダムな方向（下・左・右）から出現
                 --min <秒>             ランダムモードの最小間隔（デフォルト: 30秒）
                 --max <秒>             ランダムモードの最大間隔（デフォルト: 120秒）
+                --snooze <回数>        クリックされなかった時の再通知回数（デフォルト: 0）
+                --snooze-interval <秒> 再通知までの間隔（デフォルト: 30秒）
                 -h, --help             ヘルプを表示
 
             例:
