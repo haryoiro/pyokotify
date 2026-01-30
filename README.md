@@ -20,7 +20,13 @@
 
 ## インストール
 
-### ビルド
+### ワンライナー（推奨）
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/haryoiro/pyokotify/main/install.sh | bash
+```
+
+### ソースからビルド
 
 ```bash
 # リポジトリをクローン
