@@ -15,6 +15,10 @@
 
 ## 動作環境
 
+> **⚠️ macOS 専用です**
+>
+> pyokotify は macOS のネイティブ API（AppKit、NSWindow 等）を使用しているため、**Linux や Windows では動作しません**。
+
 - macOS 12.0 以上
 - Swift 5.9 以上
 
@@ -25,6 +29,8 @@
 ```bash
 curl -fsSL https://raw.githubusercontent.com/haryoiro/pyokotify/main/install.sh | bash
 ```
+
+Intel Mac / Apple Silicon Mac の両方に対応した Universal Binary がインストールされます。
 
 ### ソースからビルド
 
