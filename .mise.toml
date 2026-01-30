@@ -1,0 +1,18 @@
+[tools]
+# Swift は Xcode に含まれるものを使用
+
+[tasks.format]
+description = "Format Swift code"
+run = "swift-format format --recursive --in-place Sources/ Tests/"
+
+[tasks.lint]
+description = "Lint Swift code"
+run = "swift-format lint --recursive Sources/ Tests/"
+
+[tasks.test]
+description = "Run tests"
+run = "swift test"
+
+[tasks.build]
+description = "Build release"
+run = "swift build -c release"
