@@ -1,4 +1,4 @@
-# pokkofy
+# pyokotify
 
 画面端からキャラクターがぴょこっと顔を出す macOS 用の通知アプリ。
 
@@ -24,14 +24,14 @@
 
 ```bash
 # リポジトリをクローン
-git clone https://github.com/haryoiro/pokkofy.git
-cd pokkofy
+git clone https://github.com/haryoiro/pyokotify.git
+cd pyokotify
 
 # ビルド
 swift build -c release
 
 # パスを通す（任意）
-cp .build/release/pokkofy /usr/local/bin/
+cp .build/release/pyokotify /usr/local/bin/
 ```
 
 ### アクセシビリティ権限（オプション）
@@ -39,7 +39,7 @@ cp .build/release/pokkofy /usr/local/bin/
 `--cwd` オプションで特定のウィンドウにフォーカスする機能を使う場合、アクセシビリティ権限が必要です。
 
 1. **システム設定** → **プライバシーとセキュリティ** → **アクセシビリティ**
-2. pokkofy を実行するアプリ（Terminal.app、iTerm2、VSCode など）を追加
+2. pyokotify を実行するアプリ（Terminal.app、iTerm2、VSCode など）を追加
 
 権限がない場合でも `--caller` オプションによるアプリ切り替えは動作します。
 
@@ -48,12 +48,12 @@ cp .build/release/pokkofy /usr/local/bin/
 ### 基本
 
 ```bash
-pokkofy <画像パス>
+pyokotify <画像パス>
 ```
 
 ```bash
 # 例: ずんだもんを表示
-pokkofy ~/Pictures/zundamon.png
+pyokotify ~/Pictures/zundamon.png
 ```
 
 ### オプション
@@ -78,22 +78,22 @@ pokkofy ~/Pictures/zundamon.png
 
 ```bash
 # 5秒間、300pxの高さで表示
-pokkofy ~/Pictures/zundamon.png -d 5 -p 300
+pyokotify ~/Pictures/zundamon.png -d 5 -p 300
 
 # 吹き出し付きで表示
-pokkofy ~/Pictures/zundamon.png -t "タスク完了なのだ！"
+pyokotify ~/Pictures/zundamon.png -t "タスク完了なのだ！"
 
 # クリック無効で表示（マウスイベントを通過）
-pokkofy ~/Pictures/zundamon.png --no-click
+pyokotify ~/Pictures/zundamon.png --no-click
 
 # 60〜300秒のランダム間隔でぴょこぴょこ
-pokkofy ~/Pictures/zundamon.png -r --min 60 --max 300
+pyokotify ~/Pictures/zundamon.png -r --min 60 --max 300
 
 # ランダムな方向（下・左・右）から出現
-pokkofy ~/Pictures/zundamon.png --random-direction
+pyokotify ~/Pictures/zundamon.png --random-direction
 
 # ランダム間隔＋ランダム方向
-pokkofy ~/Pictures/zundamon.png -r --random-direction --min 60 --max 300
+pyokotify ~/Pictures/zundamon.png -r --random-direction --min 60 --max 300
 ```
 
 ## 活用例
@@ -101,19 +101,19 @@ pokkofy ~/Pictures/zundamon.png -r --random-direction --min 60 --max 300
 ### ビルド完了通知
 
 ```bash
-swift build && pokkofy ~/Pictures/character.png -t "ビルド成功！"
+swift build && pyokotify ~/Pictures/character.png -t "ビルド成功！"
 ```
 
 ### ポモドーロタイマー
 
 ```bash
-sleep 1500 && pokkofy ~/Pictures/character.png -t "休憩の時間だよ！"
+sleep 1500 && pyokotify ~/Pictures/character.png -t "休憩の時間だよ！"
 ```
 
 ### 癒やしモード
 
 ```bash
-pokkofy ~/Pictures/character.png -r --min 300 --max 600
+pyokotify ~/Pictures/character.png -r --min 300 --max 600
 ```
 
 ### Claude Code hooks 連携
@@ -126,13 +126,13 @@ Claude Code の hooks 機能と連携して、タスク完了時に通知を表�
 
 ```bash
 #!/bin/bash
-# Claude Code 通知スクリプト（pokkofy版）
+# Claude Code 通知スクリプト（pyokotify版）
 
 INPUT=$(cat)
 
 # ===== 設定 =====
-POKKOFY="$HOME/.local/bin/pokkofy"  # pokkofy のパス
-POKKOFY_IMAGE="$HOME/.claude/hooks/character.png"  # キャラクター画像
+PYOKOTIFY="$HOME/.local/bin/pyokotify"  # pyokotify のパス
+PYOKOTIFY_IMAGE="$HOME/.claude/hooks/character.png"  # キャラクター画像
 
 # 基本情報を取得
 EVENT_NAME=$(echo "$INPUT" | jq -r '.hook_event_name // "Unknown"')
@@ -170,21 +170,21 @@ case "$EVENT_NAME" in
     ;;
 esac
 
-# pokkofy 通知
-if [ -f "$POKKOFY" ] && [ -f "$POKKOFY_IMAGE" ]; then
-    POKKOFY_OPTS="-t \"$MESSAGE\" -d 8 -p 200"
+# pyokotify 通知
+if [ -f "$PYOKOTIFY" ] && [ -f "$PYOKOTIFY_IMAGE" ]; then
+    PYOKOTIFY_OPTS="-t \"$MESSAGE\" -d 8 -p 200"
 
     # TERM_PROGRAM で呼び出し元アプリを指定
     if [ -n "$TERM_PROGRAM" ]; then
-        POKKOFY_OPTS="$POKKOFY_OPTS --caller $TERM_PROGRAM"
+        PYOKOTIFY_OPTS="$PYOKOTIFY_OPTS --caller $TERM_PROGRAM"
     fi
 
     # CWD で特定ウィンドウにフォーカス
     if [ -n "$CWD" ]; then
-        POKKOFY_OPTS="$POKKOFY_OPTS --cwd $CWD"
+        PYOKOTIFY_OPTS="$PYOKOTIFY_OPTS --cwd $CWD"
     fi
 
-    eval "\"$POKKOFY\" \"$POKKOFY_IMAGE\" $POKKOFY_OPTS" &
+    eval "\"$PYOKOTIFY\" \"$PYOKOTIFY_IMAGE\" $PYOKOTIFY_OPTS" &
 fi
 
 exit 0

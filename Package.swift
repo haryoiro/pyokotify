@@ -2,31 +2,31 @@
 import PackageDescription
 
 let package = Package(
-    name: "pokkofy",
+    name: "pyokotify",
     platforms: [
         .macOS(.v12)
     ],
     products: [
-        .executable(name: "pokkofy", targets: ["pokkofy"]),
-        .library(name: "PokkofyCore", targets: ["PokkofyCore"]),
+        .executable(name: "pyokotify", targets: ["pyokotify"]),
+        .library(name: "PyokotifyCore", targets: ["PyokotifyCore"]),
     ],
     targets: [
         // メインの実行ファイル
         .executableTarget(
-            name: "pokkofy",
-            dependencies: ["PokkofyCore"],
-            path: "Sources/pokkofy"
+            name: "pyokotify",
+            dependencies: ["PyokotifyCore"],
+            path: "Sources/pyokotify"
         ),
         // テスト可能なコアロジック
         .target(
-            name: "PokkofyCore",
-            path: "Sources/PokkofyCore"
+            name: "PyokotifyCore",
+            path: "Sources/PyokotifyCore"
         ),
         // テスト
         .testTarget(
-            name: "PokkofyTests",
-            dependencies: ["PokkofyCore"],
-            path: "Tests/PokkofyTests"
+            name: "PyokotifyTests",
+            dependencies: ["PyokotifyCore"],
+            path: "Tests/PyokotifyTests"
         ),
     ]
 )

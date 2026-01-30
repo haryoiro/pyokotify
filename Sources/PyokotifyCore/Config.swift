@@ -2,8 +2,8 @@ import Foundation
 
 // MARK: - Configuration
 
-/// pokkofy の設定
-public struct PokkofyConfig {
+/// pyokotify の設定
+public struct PyokotifyConfig {
     public var imagePath: String
     public var displayDuration: TimeInterval
     public var animationDuration: TimeInterval
@@ -54,7 +54,7 @@ public struct PokkofyConfig {
 
 // MARK: - Terminal Bundle ID Mapping
 
-extension PokkofyConfig {
+extension PyokotifyConfig {
     /// TERM_PROGRAM → バンドルID のマッピング
     public static let termProgramToBundleId: [String: String] = [
         "vscode": "com.microsoft.VSCode",
@@ -79,9 +79,9 @@ extension PokkofyConfig {
 
 // MARK: - Argument Parsing
 
-extension PokkofyConfig {
+extension PyokotifyConfig {
     /// コマンドライン引数を解析して設定を生成
-    public static func parse(arguments: [String]) -> Result<PokkofyConfig, ConfigError> {
+    public static func parse(arguments: [String]) -> Result<PyokotifyConfig, ConfigError> {
         // ヘルプ表示
         if arguments.contains("-h") || arguments.contains("--help") {
             return .failure(.helpRequested)
@@ -92,7 +92,7 @@ extension PokkofyConfig {
             return .failure(.missingImagePath)
         }
 
-        var config = PokkofyConfig(imagePath: arguments[1])
+        var config = PyokotifyConfig(imagePath: arguments[1])
 
         // オプション解析
         var i = 2
@@ -159,7 +159,7 @@ extension PokkofyConfig {
     }
 
     /// CommandLine.arguments から設定を生成（互換性のため）
-    public static func fromArguments() -> PokkofyConfig? {
+    public static func fromArguments() -> PyokotifyConfig? {
         switch parse(arguments: CommandLine.arguments) {
         case .success(let config):
             return config
@@ -177,10 +177,10 @@ extension PokkofyConfig {
     public static func printUsage() {
         print(
             """
-            pokkofy - ぴょこぴょこ通知アプリ
+            pyokotify - ぴょこぴょこ通知アプリ
 
             使い方:
-                pokkofy <画像パス> [オプション]
+                pyokotify <画像パス> [オプション]
 
             オプション:
                 -d, --duration <秒>    表示時間（デフォルト: 3.0秒）
@@ -198,9 +198,9 @@ extension PokkofyConfig {
                 -h, --help             ヘルプを表示
 
             例:
-                pokkofy ~/Pictures/zundamon.png
-                pokkofy ~/Pictures/zundamon.png -d 5 -p 300
-                pokkofy ~/Pictures/zundamon.png -t "タスク完了なのだ！"
+                pyokotify ~/Pictures/zundamon.png
+                pyokotify ~/Pictures/zundamon.png -d 5 -p 300
+                pyokotify ~/Pictures/zundamon.png -t "タスク完了なのだ！"
             """)
     }
 }

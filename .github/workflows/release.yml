@@ -1,0 +1,46 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app
+
+      - name: Show Swift version
+        run: swift --version
+
+      - name: Build for Apple Silicon
+        run: swift build -c release --arch arm64
+
+      - name: Build for Intel
+        run: swift build -c release --arch x86_64
+
+      - name: Create Universal Binary
+        run: |
+          mkdir -p dist
+          lipo -create \
+            .build/arm64-apple-macosx/release/pyokotify \
+            .build/x86_64-apple-macosx/release/pyokotify \
+            -output dist/pyokotify
+          chmod +x dist/pyokotify
+
+      - name: Create archive
+        run: |
+          cd dist
+          zip -r pyokotify-${{ github.ref_name }}-macos.zip pyokotify
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/pyokotify-${{ github.ref_name }}-macos.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
