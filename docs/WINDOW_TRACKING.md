@@ -338,7 +338,7 @@ flowchart TD
 
 | ファイル | 役割 |
 |---------|------|
-| `Sources/pyokotify/main.swift` | エントリーポイント |
+| `Sources/Pyokotify/main.swift` | エントリーポイント |
 | `Sources/PyokotifyCore/Controller.swift` | メインロジック・ウィンドウ追跡 |
 | `Sources/PyokotifyCore/Config.swift` | 設定管理・BundleIDマッピング |
 | `Sources/PyokotifyCore/Views.swift` | UI・マウスイベント処理 |

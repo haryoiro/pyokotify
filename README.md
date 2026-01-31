@@ -2,7 +2,7 @@
 
 A macOS notification app that makes characters peek from the screen edge.
 
-![demo](assets/sample.png)
+![demo](assets/demo.gif)
 
 ## Requirements
 
@@ -54,6 +54,32 @@ $ pyokotify ~/Pictures/character.png -t "Task completed!"
 -h, --help                 Show help
 ```
 
+## Use with Claude Code
+
+pyokotify is designed to work with [Claude Code](https://docs.anthropic.com/en/docs/claude-code) hooks. Get notified when Claude needs your attention.
+
+See [examples/claude-code-hooks](examples/claude-code-hooks) for a complete setup with Stop, Notification, and AskUserQuestion events.
+
+Quick example - add to `~/.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "AskUserQuestion": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pyokotify ~/Pictures/character.png -t 'Claude has a question' -c $TERM_PROGRAM --cwd $PWD"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
 ## Examples
 
 ```console
@@ -69,6 +95,12 @@ $ pyokotify ~/Pictures/character.png -r --min 60 --max 300
 # Random direction (bottom/left/right)
 $ pyokotify ~/Pictures/character.png --random-direction
 ```
+
+## Use with SSH
+
+You can use it for various scenarios like SSH connection notifications.
+
+![ssh demo](assets/ssh_demo.gif)
 
 ## Accessibility Permission
 
