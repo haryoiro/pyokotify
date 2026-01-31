@@ -215,7 +215,7 @@ stateDiagram-v2
 
     note right of 表示中
         randomModeの場合は
-        次のpokkoをスケジュール
+        次のpyokoをスケジュール
     end note
 ```
 

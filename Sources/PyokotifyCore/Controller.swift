@@ -195,7 +195,7 @@ extension PyokotifyController {
             guard let self = self else { return }
             self.animateOut {
                 if self.config.randomMode {
-                    self.scheduleNextPokko()
+                    self.scheduleNextPyoko()
                 } else {
                     NSApp.terminate(nil)
                 }
@@ -205,14 +205,14 @@ extension PyokotifyController {
         DispatchQueue.main.asyncAfter(deadline: .now() + config.displayDuration, execute: workItem)
     }
 
-    private func scheduleNextPokko() {
+    private func scheduleNextPyoko() {
         let interval = TimeInterval.random(in: config.randomMinInterval...config.randomMaxInterval)
         DispatchQueue.main.asyncAfter(deadline: .now() + interval) { [weak self] in
-            self?.pokko()
+            self?.pyoko()
         }
     }
 
-    private func pokko() {
+    private func pyoko() {
         guard let window = window, let screen = NSScreen.main else { return }
 
         if config.randomDirection {
