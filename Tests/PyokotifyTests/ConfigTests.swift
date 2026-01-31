@@ -23,8 +23,6 @@ struct ConfigTests {
         #expect(config.message == nil)
         #expect(config.callerApp == nil)
         #expect(config.cwd == nil)
-        #expect(config.snoozeCount == 0)
-        #expect(config.snoozeInterval == 30)
     }
 
     @Test("画像パスのみの引数を正しく解析")
@@ -122,23 +120,6 @@ struct ConfigTests {
         let config = try result.get()
 
         #expect(config.cwd == "/path/to/project")
-    }
-
-    @Test("snoozeオプションを正しく解析")
-    func parseSnooze() throws {
-        let result = PyokotifyConfig.parse(arguments: ["pyokotify", "image.png", "--snooze", "3"])
-        let config = try result.get()
-
-        #expect(config.snoozeCount == 3)
-    }
-
-    @Test("snooze-intervalオプションを正しく解析")
-    func parseSnoozeInterval() throws {
-        let result = PyokotifyConfig.parse(arguments: ["pyokotify", "image.png", "--snooze", "5", "--snooze-interval", "10"])
-        let config = try result.get()
-
-        #expect(config.snoozeCount == 5)
-        #expect(config.snoozeInterval == 10)
     }
 
     @Test("複合オプションを正しく解析")

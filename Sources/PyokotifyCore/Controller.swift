@@ -12,14 +12,12 @@ public class PyokotifyController {
     private let fallbackCallerApp: NSRunningApplication?
     private var hideTimer: DispatchWorkItem?
     private var currentDirection: PeekDirection
-    private var remainingSnoozeCount: Int
 
     public init(config: PyokotifyConfig, image: NSImage, fallbackCallerApp: NSRunningApplication?) {
         self.config = config
         self.originalImage = image
         self.fallbackCallerApp = fallbackCallerApp
         self.currentDirection = config.randomDirection ? .random() : .bottom
-        self.remainingSnoozeCount = config.snoozeCount
     }
 
     public func run() {
@@ -198,8 +196,6 @@ extension PyokotifyController {
             self.animateOut {
                 if self.config.randomMode {
                     self.scheduleNextPokko()
-                } else if self.remainingSnoozeCount > 0 {
-                    self.scheduleSnooze()
                 } else {
                     NSApp.terminate(nil)
                 }
@@ -207,13 +203,6 @@ extension PyokotifyController {
         }
         hideTimer = workItem
         DispatchQueue.main.asyncAfter(deadline: .now() + config.displayDuration, execute: workItem)
-    }
-
-    private func scheduleSnooze() {
-        remainingSnoozeCount -= 1
-        DispatchQueue.main.asyncAfter(deadline: .now() + config.snoozeInterval) { [weak self] in
-            self?.pokko()
-        }
     }
 
     private func scheduleNextPokko() {
