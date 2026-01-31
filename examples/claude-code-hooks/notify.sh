@@ -35,6 +35,14 @@ case "$EVENT_NAME" in
         ;;
     esac
     ;;
+  "PreToolUse")
+    TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // "unknown"')
+    if [ "$TOOL_NAME" = "AskUserQuestion" ]; then
+      MESSAGE="$PROJECT_INFO Question for you!"
+    else
+      exit 0  # Don't notify for other tools
+    fi
+    ;;
   "Stop")
     MESSAGE="$PROJECT_INFO Done!"
     ;;
