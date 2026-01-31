@@ -2,19 +2,19 @@ import Foundation
 
 // MARK: - Geometry Utilities
 
-/// 幾何計算ユーティリティ
+/// Geometry calculation utilities
 public enum Geometry {
-    /// 矩形の縁上で、中心から指定角度方向の点を計算
+    /// Calculate the point on the edge of a rectangle at a given angle from center
     /// - Parameters:
-    ///   - rect: 対象の矩形
-    ///   - angle: 中心からの角度（ラジアン）
-    /// - Returns: 矩形の縁上の点
+    ///   - rect: The target rectangle
+    ///   - angle: Angle from center (radians)
+    /// - Returns: Point on the rectangle edge
     public static func pointOnRectEdge(rect: CGRect, angle: CGFloat) -> CGPoint {
         let center = CGPoint(x: rect.midX, y: rect.midY)
         let cosA = cos(angle)
         let sinA = sin(angle)
 
-        // 各辺との交点を計算し、最も近いものを返す
+        // Calculate intersection with each edge and return the closest
         var t: CGFloat = .greatestFiniteMagnitude
 
         if cosA > 0 {
@@ -35,11 +35,11 @@ public enum Geometry {
         )
     }
 
-    /// scaleProportionallyUpOrDown の挙動を再現して画像の描画領域を計算
+    /// Calculate the drawing rect for an image (replicates scaleProportionallyUpOrDown behavior)
     /// - Parameters:
-    ///   - imageSize: 元画像のサイズ
-    ///   - viewSize: ビューのサイズ
-    /// - Returns: 画像が描画される領域
+    ///   - imageSize: Original image size
+    ///   - viewSize: View size
+    /// - Returns: The rect where the image will be drawn
     public static func calculateImageRect(imageSize: CGSize, viewSize: CGSize) -> CGRect {
         guard imageSize.width > 0, imageSize.height > 0, viewSize.width > 0, viewSize.height > 0 else {
             return .zero
@@ -50,28 +50,28 @@ public enum Geometry {
 
         var drawSize: CGSize
         if imageAspect > viewAspect {
-            // 画像の方が横長 → 幅に合わせる
+            // Image is wider -> fit to width
             drawSize = CGSize(width: viewSize.width, height: viewSize.width / imageAspect)
         } else {
-            // 画像の方が縦長 → 高さに合わせる
+            // Image is taller -> fit to height
             drawSize = CGSize(width: viewSize.height * imageAspect, height: viewSize.height)
         }
 
-        // 中央に配置
+        // Center the image
         let x = (viewSize.width - drawSize.width) / 2
         let y = (viewSize.height - drawSize.height) / 2
 
         return CGRect(x: x, y: y, width: drawSize.width, height: drawSize.height)
     }
 
-    /// しっぽの三角形の頂点を計算
+    /// Calculate the vertices of the tail triangle
     /// - Parameters:
-    ///   - bubbleRect: 吹き出しの矩形
-    ///   - targetPoint: しっぽが向かうターゲット座標
-    ///   - tailLength: しっぽの長さ
-    ///   - tailWidth: しっぽの根元の幅
-    ///   - insetAmount: 根元の内側オフセット量
-    /// - Returns: (先端, 根元左, 根元右) のタプル、または nil
+    ///   - bubbleRect: The speech bubble rectangle
+    ///   - targetPoint: The target point where the tail points to
+    ///   - tailLength: Length of the tail
+    ///   - tailWidth: Width of the tail base
+    ///   - insetAmount: Inset offset for the tail base
+    /// - Returns: Tuple of (tip, left base, right base), or nil
     public static func calculateTailPoints(
         bubbleRect: CGRect,
         targetPoint: CGPoint,
@@ -84,22 +84,22 @@ public enum Geometry {
         let dy = targetPoint.y - bubbleCenter.y
         let angle = atan2(dy, dx)
 
-        // 縁上の点
+        // Point on edge
         let edgePoint = pointOnRectEdge(rect: bubbleRect, angle: angle)
 
-        // 根元を内側にオフセット
+        // Offset tail base inward
         let tailBase = CGPoint(
             x: edgePoint.x - cos(angle) * insetAmount,
             y: edgePoint.y - sin(angle) * insetAmount
         )
 
-        // 先端
+        // Tip
         let tip = CGPoint(
             x: edgePoint.x + cos(angle) * tailLength,
             y: edgePoint.y + sin(angle) * tailLength
         )
 
-        // 根元の左右
+        // Left and right base points
         let perpAngle = angle + .pi / 2
         let left = CGPoint(
             x: tailBase.x + cos(perpAngle) * tailWidth,

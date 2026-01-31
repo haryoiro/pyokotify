@@ -3,7 +3,7 @@ import Foundation
 
 // MARK: - Peek Direction
 
-/// キャラクターの出現方向
+/// Character appearance direction
 public enum PeekDirection: String, CaseIterable, Sendable {
     case bottom = "bottom"
     case left = "left"
@@ -13,12 +13,12 @@ public enum PeekDirection: String, CaseIterable, Sendable {
         allCases.randomElement() ?? .bottom
     }
 
-    /// 画像の回転角度（度）- 反時計回りが正
+    /// Image rotation angle (degrees) - counterclockwise is positive
     public var rotationDegrees: CGFloat {
         switch self {
-        case .bottom: return 0  // そのまま（頭が上）
-        case .left: return -90  // 頭が右（左から出てくる）- 時計回り90度
-        case .right: return 90  // 頭が左（右から出てくる）- 反時計回り90度
+        case .bottom: return 0  // No rotation (head up)
+        case .left: return -90  // Head right (appearing from left) - 90° clockwise
+        case .right: return 90  // Head left (appearing from right) - 90° counterclockwise
         }
     }
 }
@@ -26,13 +26,13 @@ public enum PeekDirection: String, CaseIterable, Sendable {
 // MARK: - Image Rotation
 
 extension NSImage {
-    /// 指定角度で回転した画像を返す
+    /// Return image rotated by specified degrees
     public func rotated(byDegrees degrees: CGFloat) -> NSImage {
         if degrees == 0 { return self }
 
         var newSize = size
 
-        // 90度/-90度回転の場合は幅と高さを入れ替え
+        // Swap width and height for 90°/-90° rotation
         if abs(degrees) == 90 || abs(degrees) == 270 {
             newSize = NSSize(width: size.height, height: size.width)
         }

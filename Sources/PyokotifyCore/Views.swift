@@ -3,14 +3,14 @@ import Foundation
 
 // MARK: - Speech Bubble View
 
-/// 吹き出しビュー（しっぽ付き）
+/// Speech bubble view with tail
 public class SpeechBubbleView: NSView {
     private let label: NSTextField
     private let padding: CGFloat = 12
     private let tailLength: CGFloat = 15
     private var calculatedSize: NSSize = .zero
 
-    /// しっぽが向かうターゲット位置（親ビュー座標系）
+    /// Target position for the tail (in parent view coordinates)
     public var tailTarget: CGPoint? {
         didSet { needsDisplay = true }
     }
@@ -67,7 +67,7 @@ public class SpeechBubbleView: NSView {
     override public func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
 
-        // 吹き出し本体の領域
+        // Bubble body area
         let margin = tailLength / 2
         let bubbleRect = NSRect(
             x: bounds.minX + margin,
@@ -79,19 +79,19 @@ public class SpeechBubbleView: NSView {
         let bubblePath = NSBezierPath(roundedRect: bubbleRect, xRadius: 10, yRadius: 10)
         let tailPath = createTailPath(bubbleRect: bubbleRect)
 
-        // 影付きで描画
+        // Draw with shadow
         let shadow = NSShadow()
         shadow.shadowColor = NSColor.black.withAlphaComponent(0.2)
         shadow.shadowOffset = NSSize(width: 2, height: -2)
         shadow.shadowBlurRadius = 4
         shadow.set()
 
-        // しっぽを先に描画（吹き出し本体の後ろ）
+        // Draw tail first (behind bubble body)
         NSColor.white.setFill()
         tailPath.fill()
         bubblePath.fill()
 
-        // 影をリセットして枠線描画
+        // Reset shadow and draw border
         NSShadow().set()
         NSColor(white: 0.85, alpha: 1.0).setStroke()
         bubblePath.lineWidth = 1
@@ -130,7 +130,7 @@ public class SpeechBubbleView: NSView {
 
 // MARK: - Pyokotify View
 
-/// メインのキャラクター表示ビュー
+/// Main character display view
 public class PyokotifyView: NSView {
     private let imageView: NSImageView
     private var bubbleView: SpeechBubbleView?
@@ -250,7 +250,7 @@ public class PyokotifyView: NSView {
 
 // MARK: - Pyokotify Window
 
-/// 透明なオーバーレイウィンドウ
+/// Transparent overlay window
 public class PyokotifyWindow: NSWindow {
     public init(contentRect: NSRect, clickable: Bool) {
         super.init(

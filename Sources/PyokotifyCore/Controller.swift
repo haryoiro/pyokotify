@@ -4,7 +4,7 @@ import Foundation
 
 // MARK: - Pyokotify Controller
 
-/// アプリケーションのメインコントローラー
+/// Main application controller
 public class PyokotifyController {
     private let config: PyokotifyConfig
     private var window: PyokotifyWindow?
@@ -22,7 +22,7 @@ public class PyokotifyController {
 
     public func run() {
         guard let screen = NSScreen.main else {
-            print("エラー: スクリーンが見つかりません")
+            print("Error: Screen not found")
             NSApp.terminate(nil)
             return
         }
@@ -121,7 +121,7 @@ extension PyokotifyController {
             overshoot: bounceOvershoot
         )
 
-        // フェーズ1: オーバーシュート
+        // Phase 1: Overshoot
         NSAnimationContext.runAnimationGroup(
             { context in
                 context.duration = config.animationDuration * 0.6
@@ -130,7 +130,7 @@ extension PyokotifyController {
                 window.animator().setFrame(overshootFrame, display: true)
             },
             completionHandler: {
-                // フェーズ2: バウンス
+                // Phase 2: Bounce back
                 NSAnimationContext.runAnimationGroup(
                     { context in
                         context.duration = self.config.animationDuration * 0.4
@@ -314,7 +314,7 @@ public class PyokotifyAppDelegate: NSObject, NSApplicationDelegate {
 
         let imagePath = (config.imagePath as NSString).expandingTildeInPath
         guard let image = NSImage(contentsOfFile: imagePath) else {
-            print("エラー: 画像を読み込めません: \(config.imagePath)")
+            print("Error: Cannot load image: \(config.imagePath)")
             NSApp.terminate(nil)
             return
         }

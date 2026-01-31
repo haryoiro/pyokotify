@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - Configuration
 
-/// pyokotify の設定
+/// Configuration for pyokotify
 public struct PyokotifyConfig {
     public var imagePath: String
     public var displayDuration: TimeInterval
@@ -55,7 +55,7 @@ public struct PyokotifyConfig {
 // MARK: - Terminal Bundle ID Mapping
 
 extension PyokotifyConfig {
-    /// TERM_PROGRAM → バンドルID のマッピング
+    /// TERM_PROGRAM to Bundle ID mapping
     public static let termProgramToBundleId: [String: String] = [
         "vscode": "com.microsoft.VSCode",
         "VSCode": "com.microsoft.VSCode",
@@ -80,21 +80,21 @@ extension PyokotifyConfig {
 // MARK: - Argument Parsing
 
 extension PyokotifyConfig {
-    /// コマンドライン引数を解析して設定を生成
+    /// Parse command line arguments and generate configuration
     public static func parse(arguments: [String]) -> Result<PyokotifyConfig, ConfigError> {
-        // ヘルプ表示
+        // Show help
         if arguments.contains("-h") || arguments.contains("--help") {
             return .failure(.helpRequested)
         }
 
-        // 画像パス（必須）
+        // Image path (required)
         guard arguments.count >= 2 else {
             return .failure(.missingImagePath)
         }
 
         var config = PyokotifyConfig(imagePath: arguments[1])
 
-        // オプション解析
+        // Parse options
         var i = 2
         while i < arguments.count {
             switch arguments[i] {
@@ -158,7 +158,7 @@ extension PyokotifyConfig {
         return .success(config)
     }
 
-    /// CommandLine.arguments から設定を生成（互換性のため）
+    /// Generate configuration from CommandLine.arguments (for compatibility)
     public static func fromArguments() -> PyokotifyConfig? {
         switch parse(arguments: CommandLine.arguments) {
         case .success(let config):
@@ -167,7 +167,7 @@ extension PyokotifyConfig {
             if case .helpRequested = error {
                 printUsage()
             } else {
-                print("エラー: \(error.localizedDescription)")
+                print("Error: \(error.localizedDescription)")
                 printUsage()
             }
             return nil
@@ -177,30 +177,30 @@ extension PyokotifyConfig {
     public static func printUsage() {
         print(
             """
-            pyokotify - ぴょこぴょこ通知アプリ
+            pyokotify - Character peek notification app
 
-            使い方:
-                pyokotify <画像パス> [オプション]
+            Usage:
+                pyokotify <image-path> [options]
 
-            オプション:
-                -d, --duration <秒>    表示時間（デフォルト: 3.0秒）
-                -a, --animation <秒>   アニメーション時間（デフォルト: 0.4秒）
-                -p, --peek <px>        顔を出す高さ（デフォルト: 200px）
-                -m, --margin <px>      右端からのマージン（デフォルト: 50px）
-                --no-click             クリック無効化（マウスイベントを通過）
-                -t, --text <メッセージ> 吹き出しでメッセージを表示
-                -c, --caller <アプリ>  クリック時に戻るアプリ（TERM_PROGRAM値）
-                --cwd <パス>           作業ディレクトリ（特定ウィンドウにフォーカス）
-                -r, --random           ランダム間隔でぴょこぴょこし続ける
-                --random-direction     ランダムな方向（下・左・右）から出現
-                --min <秒>             ランダムモードの最小間隔（デフォルト: 30秒）
-                --max <秒>             ランダムモードの最大間隔（デフォルト: 120秒）
-                -h, --help             ヘルプを表示
+            Options:
+                -d, --duration <sec>   Display duration (default: 3.0)
+                -a, --animation <sec>  Animation duration (default: 0.4)
+                -p, --peek <px>        Peek height (default: 200)
+                -m, --margin <px>      Margin from edge (default: 50)
+                --no-click             Disable click (pass-through mouse events)
+                -t, --text <message>   Show message in speech bubble
+                -c, --caller <app>     App to return to on click (TERM_PROGRAM value)
+                --cwd <path>           Focus window containing this path
+                -r, --random           Keep popping at random intervals
+                --random-direction     Appear from random direction (bottom/left/right)
+                --min <sec>            Min interval for random mode (default: 30)
+                --max <sec>            Max interval for random mode (default: 120)
+                -h, --help             Show help
 
-            例:
-                pyokotify ~/Pictures/zundamon.png
-                pyokotify ~/Pictures/zundamon.png -d 5 -p 300
-                pyokotify ~/Pictures/zundamon.png -t "タスク完了なのだ！"
+            Examples:
+                pyokotify ~/Pictures/character.png
+                pyokotify ~/Pictures/character.png -d 5 -p 300
+                pyokotify ~/Pictures/character.png -t "Task completed!"
             """)
     }
 }
@@ -216,7 +216,7 @@ public enum ConfigError: Error, LocalizedError {
         case .helpRequested:
             return nil
         case .missingImagePath:
-            return "画像パスを指定してください"
+            return "Please specify an image path"
         }
     }
 }
