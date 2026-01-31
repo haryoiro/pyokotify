@@ -15,7 +15,7 @@ let package = Package(
         .executableTarget(
             name: "pyokotify",
             dependencies: ["PyokotifyCore"],
-            path: "Sources/pyokotify"
+            path: "Sources/Pyokotify"
         ),
         // テスト可能なコアロジック
         .target(
