@@ -32,6 +32,9 @@ unzip -q "$TEMP_DIR/pyokotify.zip" -d "$TEMP_DIR"
 
 # インストール
 info "$INSTALL_DIR にインストール中..."
+if [[ ! -d "$INSTALL_DIR" ]]; then
+    sudo mkdir -p "$INSTALL_DIR"
+fi
 if [[ -w "$INSTALL_DIR" ]]; then
     mv "$TEMP_DIR/pyokotify" "$INSTALL_DIR/"
 else
