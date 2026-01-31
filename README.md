@@ -80,15 +80,15 @@ The `--caller` option works without this permission.
 
 ## TERM_PROGRAM Values
 
-| Terminal | Value |
-|----------|-------|
-| VSCode | `vscode` |
-| iTerm2 | `iTerm.app` |
+| Terminal     | Value            |
+| ------------ | ---------------- |
+| VSCode       | `vscode`         |
+| iTerm2       | `iTerm.app`      |
 | Terminal.app | `Apple_Terminal` |
-| Ghostty | `ghostty` |
-| Warp | `WarpTerminal` |
-| Alacritty | `Alacritty` |
-| kitty | `kitty` |
+| Ghostty      | `ghostty`        |
+| Warp         | `WarpTerminal`   |
+| Alacritty    | `Alacritty`      |
+| kitty        | `kitty`          |
 
 ## License
 
