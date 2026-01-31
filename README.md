@@ -1,66 +1,72 @@
 # pyokotify
 
-A macOS notification app that makes characters peek from the screen edge.
+画面の端からキャラクターがぴょこっと顔を出す macOS 通知アプリ
 
 ![demo](assets/demo.gif)
 
-## Requirements
+## 必要環境
 
-- macOS 12.0+
-- Swift 5.9+
+- macOS 12.0以上
+- Swift 5.9以上
 
-Note: This tool uses macOS native APIs (AppKit, NSWindow) and does not work on Linux or Windows.
+※ macOS ネイティブ API (AppKit, NSWindow) を使用しているため、Linux / Windows では動作しません。
 
-## Install
+## インストール
 
-### Binary
-
-```console
-$ curl -fsSL https://raw.githubusercontent.com/haryoiro/pyokotify/main/install.sh | bash
-```
-
-### Build from source
+### バイナリ
 
 ```console
-$ git clone https://github.com/haryoiro/pyokotify.git
-$ cd pyokotify
-$ swift build -c release
-$ cp .build/release/pyokotify /usr/local/bin/
+curl -fsSL https://raw.githubusercontent.com/haryoiro/pyokotify/main/install.sh | bash
 ```
 
-## Usage
+`~/.local/bin` にインストールされます。
+
+**環境変数:**
+- `PYOKOTIFY_QUIET=1` - 出力を抑制
+- `PYOKOTIFY_DEBUG=1` - デバッグ出力を有効化
+
+### ソースからビルド
 
 ```console
-$ pyokotify <image-path>
-$ pyokotify ~/Pictures/character.png
-$ pyokotify ~/Pictures/character.png -t "Task completed!"
+git clone https://github.com/haryoiro/pyokotify.git
+cd pyokotify
+swift build -c release
+cp .build/release/pyokotify ~/.local/bin/
 ```
 
-## Options
+## 使い方
 
-```
--d, --duration <sec>       Display duration (default: 3.0)
--a, --animation <sec>      Animation duration (default: 0.4)
--p, --peek <px>            Peek height (default: 200)
--m, --margin <px>          Margin from edge (default: 50)
--t, --text <message>       Show message in speech bubble
--c, --caller <app>         App to return to on click (TERM_PROGRAM value)
-    --cwd <path>           Focus window containing this path
-    --no-click             Disable click (pass-through mouse events)
--r, --random               Keep popping at random intervals
-    --random-direction     Appear from random direction (bottom/left/right)
-    --min <sec>            Min interval for random mode (default: 30)
-    --max <sec>            Max interval for random mode (default: 120)
--h, --help                 Show help
+```console
+pyokotify <画像パス>
+pyokotify ~/Pictures/character.png
+pyokotify ~/Pictures/character.png -t "タスク完了！"
 ```
 
-## Use with Claude Code
+## オプション
 
-pyokotify is designed to work with [Claude Code](https://docs.anthropic.com/en/docs/claude-code) hooks. Get notified when Claude needs your attention.
+```
+-d, --duration <秒>        表示時間（デフォルト: 3.0）
+-a, --animation <秒>       アニメーション時間（デフォルト: 0.4）
+-p, --peek <px>            顔を出す高さ（デフォルト: 200）
+-m, --margin <px>          端からのマージン（デフォルト: 50）
+-t, --text <メッセージ>     吹き出しでメッセージを表示
+-c, --caller <アプリ>       クリック時に戻るアプリ（TERM_PROGRAM 値）
+    --cwd <パス>           このパスを含むウィンドウにフォーカス
+    --no-click             クリック無効化（マウスイベントを通過）
+-r, --random               ランダム間隔で繰り返し表示
+    --random-direction     ランダムな方向から出現（下/左/右）
+    --min <秒>             ランダムモードの最小間隔（デフォルト: 30）
+    --max <秒>             ランダムモードの最大間隔（デフォルト: 120）
+-h, --help                 ヘルプを表示
+```
 
-See [examples/claude-code-hooks](examples/claude-code-hooks) for a complete setup with Stop, Notification, and AskUserQuestion events.
+## Claude Code との連携
 
-Quick example - add to `~/.claude/settings.json`:
+pyokotify は [Claude Code](https://docs.anthropic.com/en/docs/claude-code) の hooks と連携できます。Claude が応答を待っているときに通知を受け取れます。
+
+Stop, Notification, AskUserQuestion イベントの完全なセットアップは [examples/claude-code-hooks](examples/claude-code-hooks) を参照してください。
+
+簡単な例 - `~/.claude/settings.json` に追加:
 
 ```json
 {
@@ -71,7 +77,7 @@ Quick example - add to `~/.claude/settings.json`:
         "hooks": [
           {
             "type": "command",
-            "command": "pyokotify ~/Pictures/character.png -t 'Claude has a question' -c $TERM_PROGRAM --cwd $PWD"
+            "command": "pyokotify ~/Pictures/character.png -t 'Claudeから質問があるよ' -c $TERM_PROGRAM --cwd $PWD"
           }
         ]
       }
@@ -80,39 +86,39 @@ Quick example - add to `~/.claude/settings.json`:
 }
 ```
 
-## Examples
+## 使用例
 
 ```console
-# Show for 5 seconds with 300px peek height
-$ pyokotify ~/Pictures/character.png -d 5 -p 300
+# 5秒間、300pxの高さで表示
+pyokotify ~/Pictures/character.png -d 5 -p 300
 
-# With speech bubble
-$ pyokotify ~/Pictures/character.png -t "Build succeeded!"
+# 吹き出し付き
+pyokotify ~/Pictures/character.png -t "ビルド成功！"
 
-# Random interval mode
-$ pyokotify ~/Pictures/character.png -r --min 60 --max 300
+# ランダム間隔モード
+pyokotify ~/Pictures/character.png -r --min 60 --max 300
 
-# Random direction (bottom/left/right)
-$ pyokotify ~/Pictures/character.png --random-direction
+# ランダムな方向から出現（下/左/右）
+pyokotify ~/Pictures/character.png --random-direction
 ```
 
-## Use with SSH
+## SSH との連携
 
-You can use it for various scenarios like SSH connection notifications.
+SSH 接続通知など、様々なシナリオで活用できます。
 
 ![ssh demo](assets/ssh_demo.gif)
 
-## Accessibility Permission
+## アクセシビリティ権限
 
-The `--cwd` option requires accessibility permission to focus specific windows.
+`--cwd` オプションで特定のウィンドウにフォーカスするには、アクセシビリティ権限が必要です。
 
-System Settings > Privacy & Security > Accessibility > Add your terminal app
+システム設定 > プライバシーとセキュリティ > アクセシビリティ > ターミナルアプリを追加
 
-The `--caller` option works without this permission.
+`--caller` オプションはこの権限なしで動作します。
 
-## TERM_PROGRAM Values
+## TERM_PROGRAM の値
 
-| Terminal     | Value            |
+| ターミナル   | 値               |
 | ------------ | ---------------- |
 | VSCode       | `vscode`         |
 | iTerm2       | `iTerm.app`      |
@@ -122,6 +128,6 @@ The `--caller` option works without this permission.
 | Alacritty    | `Alacritty`      |
 | kitty        | `kitty`          |
 
-## License
+## ライセンス
 
 MIT
