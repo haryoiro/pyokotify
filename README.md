@@ -19,13 +19,19 @@ Note: This tool uses macOS native APIs (AppKit, NSWindow) and does not work on L
 $ curl -fsSL https://raw.githubusercontent.com/haryoiro/pyokotify/main/install.sh | bash
 ```
 
+Installs to `~/.local/bin` by default (no sudo required). Set `MISE_INSTALL_PATH` to customize.
+
+**Environment variables:**
+- `PYOKOTIFY_QUIET=1` - Suppress output
+- `PYOKOTIFY_DEBUG=1` - Enable debug output
+
 ### Build from source
 
 ```console
 $ git clone https://github.com/haryoiro/pyokotify.git
 $ cd pyokotify
 $ swift build -c release
-$ cp .build/release/pyokotify /usr/local/bin/
+$ cp .build/release/pyokotify ~/.local/bin/
 ```
 
 ## Usage

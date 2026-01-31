@@ -40,10 +40,17 @@ jobs:
           cd dist
           zip -r pyokotify-${{ github.ref_name }}-macos.zip pyokotify
 
+      - name: Generate checksums
+        run: |
+          cd dist
+          shasum -a 256 pyokotify-${{ github.ref_name }}-macos.zip > checksums.txt
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/pyokotify-${{ github.ref_name }}-macos.zip
+          files: |
+            dist/pyokotify-${{ github.ref_name }}-macos.zip
+            dist/checksums.txt
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
