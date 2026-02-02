@@ -62,13 +62,18 @@ pyokotify ~/Pictures/character.png -t "タスク完了！"
 | `--max <秒>`             | ランダムモードの最大間隔（デフォルト: 120）|
 | `-h, --help`             | ヘルプを表示                               |
 
-## Claude Code との連携
+## Hooks 連携
 
-pyokotify は [Claude Code](https://docs.anthropic.com/en/docs/claude-code) の hooks と連携できます。Claude が応答を待っているときに通知を受け取れます。
+pyokotify は AI コーディングツールの hooks と連携できます。タスク完了や入力待ちを通知できます。
 
-`--hooks` オプションを使うと、標準入力から hooks JSON を読み取り、cwd や caller が自動設定されます。
+| ツール             | 設定ファイル                |
+| ------------------ | --------------------------- |
+| Claude Code        | `~/.claude/settings.json`   |
+| GitHub Copilot CLI | `~/.config/github-copilot/hooks.json` |
 
-`~/.claude/settings.json` に追加:
+`--hooks` オプションで標準入力から hooks JSON を読み取り、cwd や caller が自動設定されます。JSON形式は自動判別されます。
+
+### Claude Code
 
 ```json
 {
@@ -84,9 +89,33 @@ pyokotify は [Claude Code](https://docs.anthropic.com/en/docs/claude-code) の 
 }
 ```
 
-テンプレート変数 (`-t` で使用可能): `$dir`, `$branch`, `$cwd`, `$event`, `$tool`
+### GitHub Copilot CLI
+
+```json
+{
+  "hooks": {
+    "post-response": "pyokotify ~/Pictures/character.png --hooks -t '[$dir] Done!'"
+  }
+}
+```
+
+### テンプレート変数
+
+`-t` オプションで使用可能:
+
+| 変数      | 説明             |
+| --------- | ---------------- |
+| `$dir`    | ディレクトリ名   |
+| `$branch` | Git ブランチ名   |
+| `$cwd`    | フルパス         |
+| `$event`  | イベント名       |
+| `$tool`   | ツール名         |
 
 詳細は [examples/claude-code-hooks](examples/claude-code-hooks) を参照してください。
+
+## 対応画像形式
+
+PNG, JPEG, GIF, TIFF, BMP, HEIC, WebP, PDF など（macOS がサポートする形式すべて）
 
 ## 使用例
 
@@ -96,6 +125,9 @@ pyokotify ~/Pictures/character.png -d 5 -p 300
 
 # 吹き出し付き
 pyokotify ~/Pictures/character.png -t "ビルド成功！"
+
+# サウンド付き
+pyokotify ~/Pictures/character.png -t "完了！" -s ~/Sounds/notification.mp3
 
 # ランダム間隔モード
 pyokotify ~/Pictures/character.png -r --min 60 --max 300
