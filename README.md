@@ -1,6 +1,6 @@
 # pyokotify
 
-画面の端からキャラクターがぴょこっと顔を出す macOS 通知アプリ
+画面の端からキャラクターがぴょこっと顔を出す macOS 用通知ツール
 
 ![demo](assets/demo.gif)
 
