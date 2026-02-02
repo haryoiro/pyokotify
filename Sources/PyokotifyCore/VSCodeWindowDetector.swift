@@ -8,30 +8,44 @@ public enum VSCodeWindowDetector {
     private static var bundleIds: [String] { BundleIDRegistry.vscodeBundleIds }
 
     /// VSCode関連の環境変数からウィンドウを特定してフォーカス
+    /// - Parameter cwd: 作業ディレクトリ（指定された場合はこれを優先してウィンドウを特定）
     /// - Returns: フォーカスに成功した場合はtrue
-    public static func focusCurrentWindow() -> Bool {
-        // 方法1: VSCODE_GIT_IPC_HANDLE から特定
-        if let windowId = detectWindowIdFromIpcHandle() {
-            if focusWindowByConfigId(windowId) {
-                return true
+    public static func focusCurrentWindow(cwd: String? = nil) -> Bool {
+        // 方法1: 明示的に指定されたcwdからプロジェクト名でマッチング（最も確実）
+        if let cwd = cwd {
+            let projectName = (cwd as NSString).lastPathComponent
+            if !projectName.isEmpty {
+                if WindowDetectorUtils.focusWindowByTitle(projectName, bundleIds: bundleIds) {
+                    return true
+                }
             }
         }
 
-        // 方法2: TTYから特定
+        // 方法2: VSCODE_GIT_IPC_HANDLE からプロジェクトパスを取得してマッチング
+        if let projectPath = detectProjectPathFromIpcHandle() {
+            let projectName = (projectPath as NSString).lastPathComponent
+            if !projectName.isEmpty {
+                if WindowDetectorUtils.focusWindowByTitle(projectName, bundleIds: bundleIds) {
+                    return true
+                }
+            }
+        }
+
+        // 方法3: TTYから特定
         if let windowTitle = WindowDetectorUtils.detectWindowTitleFromTty() {
             if WindowDetectorUtils.focusWindowByTitle(windowTitle, bundleIds: bundleIds) {
                 return true
             }
         }
 
-        // 方法3: フォールバック
+        // 方法4: フォールバック - VSCodeアプリにフォーカス（最後の手段）
         return WindowDetectorUtils.focusAnyApp(bundleIds: bundleIds)
     }
 
     // MARK: - VSCode固有: IPC Handle検出
 
-    /// VSCODE_GIT_IPC_HANDLEからウィンドウIDを特定
-    private static func detectWindowIdFromIpcHandle() -> String? {
+    /// VSCODE_GIT_IPC_HANDLEからプロジェクトパスを特定
+    private static func detectProjectPathFromIpcHandle() -> String? {
         guard let ipcHandle = ProcessInfo.processInfo.environment["VSCODE_GIT_IPC_HANDLE"]
         else {
             return nil
@@ -49,7 +63,8 @@ public enum VSCodeWindowDetector {
             return nil
         }
 
-        return getWindowConfigId(forPid: rendererPid)
+        // Rendererプロセスのコマンドラインからプロジェクトパスを取得
+        return getProjectPath(forPid: rendererPid)
     }
 
     /// ソケットパスからIDを抽出
@@ -133,32 +148,23 @@ public enum VSCodeWindowDetector {
         return formatter.date(from: output)
     }
 
-    /// プロセスのコマンドラインから--vscode-window-configを取得
-    private static func getWindowConfigId(forPid pid: pid_t) -> String? {
+    /// プロセスのコマンドラインからプロジェクトパスを取得
+    private static func getProjectPath(forPid pid: pid_t) -> String? {
         let output = WindowDetectorUtils.runCommand("/bin/ps", arguments: ["-o", "args=", "-p", "\(pid)"])
         guard let output = output else { return nil }
 
-        let pattern = "vscode-window-config=(vscode:[a-f0-9-]+)"
-        guard let regex = try? NSRegularExpression(pattern: pattern),
-            let match = regex.firstMatch(
-                in: output, range: NSRange(output.startIndex..., in: output))
-        else {
-            return nil
+        // --folder-uri=file:///path/to/project 形式からパスを抽出
+        let folderPattern = "folder-uri=file://([^\\s]+)"
+        if let regex = try? NSRegularExpression(pattern: folderPattern),
+            let match = regex.firstMatch(in: output, range: NSRange(output.startIndex..., in: output)),
+            let range = Range(match.range(at: 1), in: output)
+        {
+            let encodedPath = String(output[range])
+            // URLデコード
+            return encodedPath.removingPercentEncoding ?? encodedPath
         }
 
-        if let range = Range(match.range(at: 1), in: output) {
-            return String(output[range])
-        }
+        // フォールバック: vscode-window-configからは取得できないのでnilを返す
         return nil
-    }
-
-    // MARK: - ウィンドウフォーカス
-
-    /// window-config IDでウィンドウをフォーカス
-    private static func focusWindowByConfigId(_ configId: String) -> Bool {
-        let apps = NSRunningApplication.runningApplications(withBundleIdentifier: bundleIds[0])
-        guard let app = apps.first else { return false }
-        app.activate(options: [.activateIgnoringOtherApps])
-        return true
     }
 }

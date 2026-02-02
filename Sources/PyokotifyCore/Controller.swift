@@ -241,9 +241,9 @@ extension PyokotifyController {
         hideTimer?.cancel()
 
         // VSCode専用の高精度ウィンドウ検出を試行
-        if isVSCodeEnvironment() && VSCodeWindowDetector.focusCurrentWindow() {
+        if isVSCodeEnvironment() && VSCodeWindowDetector.focusCurrentWindow(cwd: config.cwd) {
             // 成功
-        } else if isIntelliJEnvironment() && IntelliJWindowDetector.focusCurrentWindow() {
+        } else if isIntelliJEnvironment() && IntelliJWindowDetector.focusCurrentWindow(cwd: config.cwd) {
             // 成功
         } else if !focusWindowByCwd() {
             // フォールバック: アプリにフォーカス
