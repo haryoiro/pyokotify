@@ -1,9 +1,13 @@
-# VSCode ウィンドウ追跡の仕様
+# IDE ウィンドウ追跡の仕様
 
-pyokotifyは、通知クリック時に呼び出し元のVSCodeウィンドウにフォーカスを戻す機能を持っています。
-複数のVSCodeウィンドウが開いている場合でも、正しいウィンドウを特定してフォーカスできます。
+pyokotifyは、通知クリック時に呼び出し元のIDEウィンドウにフォーカスを戻す機能を持っています。
+複数のウィンドウが開いている場合でも、正しいウィンドウを特定してフォーカスできます。
 
-## 検出方法の優先順位
+---
+
+## VSCode
+
+### 検出方法の優先順位
 
 以下の順序で検出を試み、最初に成功した方法でウィンドウをフォーカスします。
 
@@ -81,15 +85,77 @@ ps eww -o command= -p {pluginPid}
 Pluginプロセスの環境変数から`PWD=...`を抽出します。
 このPWDは、そのVSCodeウィンドウで開いているワークスペースのパスを示します。
 
-## 対応IDE
+### 対応IDE
 
 - Visual Studio Code (`com.microsoft.VSCode`)
 - VSCode Insiders (`com.microsoft.VSCodeInsiders`)
 - VSCodium (`com.vscodium`)
 - Cursor (`com.todesktop.230313mzl4w4u92`)
 
-## 制限事項
+### 制限事項
+
+- ウィンドウタイトルにプロジェクト名が含まれている必要がある
+- VSCodeのGit拡張が有効である必要がある（デフォルトで有効）
+
+---
+
+## IntelliJ / JetBrains IDE
+
+### 検出方法の優先順位
+
+以下の順序で検出を試み、最初に成功した方法でウィンドウをフォーカスします。
+
+#### 方法1: cwdからプロジェクト名でマッチング
+
+hooks JSONで渡される`cwd`（作業ディレクトリ）のディレクトリ名を取得し、
+ウィンドウタイトルに含まれるウィンドウを探してフォーカスします。
+
+#### 方法2: __CFBundleIdentifier + 親プロセスのcwd
+
+JetBrains IDEのターミナルでは`__CFBundleIdentifier`環境変数が設定されています。
+この環境変数でIDEを特定し、親プロセスのcwdからプロジェクト名を取得してマッチングします。
+
+```
+__CFBundleIdentifier (例: com.jetbrains.intellij)
+    ↓ 親プロセスのcwdを取得
+親プロセス cwd (/path/to/project)
+    ↓ ディレクトリ名を抽出
+プロジェクト名 → ウィンドウタイトルでマッチング
+```
+
+#### 方法3: 親プロセスのcwdから全IDE検索
+
+親プロセスのcwdを取得し、全てのJetBrains IDEでウィンドウタイトルをマッチングします。
+
+#### 方法4: TTYからウィンドウタイトルを推測
+
+現在のTTYデバイスからシェルプロセスを特定し、そのcwdからウィンドウタイトルを推測します。
+
+#### 方法5: フォールバック
+
+上記の方法がすべて失敗した場合、JetBrains IDEアプリをアクティブにします。
+
+### 対応IDE
+
+- IntelliJ IDEA (`com.jetbrains.intellij`, `com.jetbrains.intellij-EAP`, `com.jetbrains.intellij.ce`)
+- WebStorm (`com.jetbrains.WebStorm`, `com.jetbrains.WebStorm-EAP`)
+- PyCharm (`com.jetbrains.pycharm`, `com.jetbrains.pycharm-EAP`, `com.jetbrains.pycharm.ce`)
+- GoLand (`com.jetbrains.goland`, `com.jetbrains.goland-EAP`)
+- RubyMine (`com.jetbrains.rubymine`, `com.jetbrains.rubymine-EAP`)
+- CLion (`com.jetbrains.CLion`, `com.jetbrains.CLion-EAP`)
+- PhpStorm (`com.jetbrains.PhpStorm`, `com.jetbrains.PhpStorm-EAP`)
+- Rider (`com.jetbrains.rider`, `com.jetbrains.rider-EAP`)
+- AppCode (`com.jetbrains.AppCode`, `com.jetbrains.AppCode-EAP`)
+- DataGrip (`com.jetbrains.datagrip`, `com.jetbrains.datagrip-EAP`)
+- Fleet (`com.jetbrains.fleet`)
+
+### 制限事項
+
+- ウィンドウタイトルにプロジェクト名が含まれている必要がある
+
+---
+
+## 共通の制限事項
 
 - macOS専用（Accessibility API、lsof、psコマンドに依存）
 - ウィンドウタイトルにプロジェクト名が含まれている必要がある
-- VSCodeのGit拡張が有効である必要がある（`VSCODE_GIT_IPC_HANDLE`の設定に必要）
