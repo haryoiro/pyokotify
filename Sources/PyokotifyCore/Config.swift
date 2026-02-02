@@ -18,6 +18,10 @@ public struct PyokotifyConfig {
     public var message: String?
     public var callerApp: String?
     public var cwd: String?
+    // Claude Code hooks 連携
+    public var claudeHooksMode: Bool
+    public var soundPath: String?
+    public var autoDetectCaller: Bool
 
     public init(
         imagePath: String,
@@ -33,7 +37,10 @@ public struct PyokotifyConfig {
         direction: PeekDirection = .bottom,
         message: String? = nil,
         callerApp: String? = nil,
-        cwd: String? = nil
+        cwd: String? = nil,
+        claudeHooksMode: Bool = false,
+        soundPath: String? = nil,
+        autoDetectCaller: Bool = true
     ) {
         self.imagePath = imagePath
         self.displayDuration = displayDuration
@@ -49,6 +56,9 @@ public struct PyokotifyConfig {
         self.message = message
         self.callerApp = callerApp
         self.cwd = cwd
+        self.claudeHooksMode = claudeHooksMode
+        self.soundPath = soundPath
+        self.autoDetectCaller = autoDetectCaller
     }
 }
 
@@ -56,20 +66,7 @@ public struct PyokotifyConfig {
 
 extension PyokotifyConfig {
     /// TERM_PROGRAM → バンドルID のマッピング
-    public static let termProgramToBundleId: [String: String] = [
-        "vscode": "com.microsoft.VSCode",
-        "VSCode": "com.microsoft.VSCode",
-        "iTerm.app": "com.googlecode.iterm2",
-        "Apple_Terminal": "com.apple.Terminal",
-        "WarpTerminal": "dev.warp.Warp-Stable",
-        "Hyper": "co.zeit.hyper",
-        "Alacritty": "org.alacritty",
-        "kitty": "net.kovidgoyal.kitty",
-        "Tabby": "org.tabby",
-        "ghostty": "com.mitchellh.ghostty",
-        "Ghostty": "com.mitchellh.ghostty",
-        "tmux": "com.apple.Terminal",
-    ]
+    public static var termProgramToBundleId: [String: String] { BundleIDRegistry.termProgramToBundleId }
 
     public func getCallerBundleId() -> String? {
         guard let caller = callerApp else { return nil }
@@ -149,6 +146,15 @@ extension PyokotifyConfig {
                     config.cwd = arguments[i + 1]
                     i += 1
                 }
+            case "--claude-hooks":
+                config.claudeHooksMode = true
+            case "-s", "--sound":
+                if i + 1 < arguments.count {
+                    config.soundPath = arguments[i + 1]
+                    i += 1
+                }
+            case "--no-auto-detect":
+                config.autoDetectCaller = false
             default:
                 break
             }
@@ -197,10 +203,25 @@ extension PyokotifyConfig {
                 --max <秒>             ランダムモードの最大間隔（デフォルト: 120秒）
                 -h, --help             ヘルプを表示
 
+            Claude Code hooks:
+                --claude-hooks         標準入力からClaude Code hooks JSONを読み取る
+                --no-auto-detect       親プロセス自動検出を無効化
+
+            サウンド:
+                -s, --sound <パス>     通知時に音声を再生
+
+            テンプレート変数（-t オプションで使用可能）:
+                $dir                   ディレクトリ名
+                $branch                Gitブランチ名
+                $cwd                   フルパス
+                $event                 イベント名（Claude hooks）
+                $tool                  ツール名（Claude hooks）
+
             例:
                 pyokotify ~/Pictures/zundamon.png
                 pyokotify ~/Pictures/zundamon.png -d 5 -p 300
                 pyokotify ~/Pictures/zundamon.png -t "タスク完了なのだ！"
+                pyokotify ~/Pictures/zundamon.png --claude-hooks -t "[$dir:$branch] Done!"
             """)
     }
 }

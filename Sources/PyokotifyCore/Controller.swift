@@ -240,13 +240,79 @@ extension PyokotifyController {
     private func handleClick() {
         hideTimer?.cancel()
 
-        if !focusWindowByCwd() {
+        // VSCode専用の高精度ウィンドウ検出を試行
+        if isVSCodeEnvironment() && VSCodeWindowDetector.focusCurrentWindow() {
+            // 成功
+        } else if isIntelliJEnvironment() && IntelliJWindowDetector.focusCurrentWindow() {
+            // 成功
+        } else if !focusWindowByCwd() {
+            // フォールバック: アプリにフォーカス
             if let app = getCallerApp() {
                 app.activate(options: [.activateIgnoringOtherApps])
             }
         }
 
         animateOut { NSApp.terminate(nil) }
+    }
+
+    /// VSCode環境かどうかを判定
+    private func isVSCodeEnvironment() -> Bool {
+        // TERM_PROGRAM または callerApp が VSCode を示している
+        if let termProgram = ProcessInfo.processInfo.environment["TERM_PROGRAM"],
+            termProgram.lowercased().contains("vscode")
+        {
+            return true
+        }
+        if let caller = config.callerApp,
+            caller.lowercased().contains("vscode")
+        {
+            return true
+        }
+        // VSCODE_GIT_IPC_HANDLE が設定されている
+        if ProcessInfo.processInfo.environment["VSCODE_GIT_IPC_HANDLE"] != nil {
+            return true
+        }
+        return false
+    }
+
+    /// IntelliJ/JetBrains IDE環境かどうかを判定
+    private func isIntelliJEnvironment() -> Bool {
+        // JetBrains IDE名のリスト
+        let jetBrainsNames = [
+            "idea", "intellij", "appcode", "clion", "webstorm",
+            "pycharm", "phpstorm", "goland", "rubymine", "rider",
+            "datagrip", "fleet",
+        ]
+
+        // __CFBundleIdentifier が JetBrains IDE を示している（最も信頼性が高い）
+        if let bundleId = ProcessInfo.processInfo.environment["__CFBundleIdentifier"],
+            bundleId.contains("jetbrains")
+        {
+            return true
+        }
+
+        // TERMINAL_EMULATOR が JetBrains-JediTerm を示している
+        if let termEmulator = ProcessInfo.processInfo.environment["TERMINAL_EMULATOR"],
+            termEmulator.contains("JetBrains")
+        {
+            return true
+        }
+
+        // callerApp が JetBrains IDE を示している
+        if let caller = config.callerApp?.lowercased() {
+            for name in jetBrainsNames {
+                if caller.contains(name) {
+                    return true
+                }
+            }
+        }
+
+        // __INTELLIJ_COMMAND_HISTFILE__ が設定されている（IntelliJターミナル固有）
+        if ProcessInfo.processInfo.environment["__INTELLIJ_COMMAND_HISTFILE__"] != nil {
+            return true
+        }
+
+        return false
     }
 
     private func getCallerApp() -> NSRunningApplication? {
@@ -300,6 +366,7 @@ extension PyokotifyController {
 public class PyokotifyAppDelegate: NSObject, NSApplicationDelegate {
     private var controller: PyokotifyController?
     private var callerApp: NSRunningApplication?
+    private var soundPlayer: SoundPlayer?
 
     override public init() {
         self.callerApp = NSWorkspace.shared.frontmostApplication
@@ -307,11 +374,35 @@ public class PyokotifyAppDelegate: NSObject, NSApplicationDelegate {
     }
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
-        guard let config = PyokotifyConfig.fromArguments() else {
+        // 1. コマンドライン引数を解析
+        guard var config = PyokotifyConfig.fromArguments() else {
             NSApp.terminate(nil)
             return
         }
 
+        // 2. Claude Code hooks モード処理
+        if config.claudeHooksMode {
+            config = processClaudeHooksMode(config: config)
+        }
+
+        // 3. 親プロセス自動検出（callerAppが未指定の場合）
+        if config.callerApp == nil && config.autoDetectCaller {
+            config.callerApp = ProcessDetector.detectTerminalApp()
+        }
+
+        // 4. テンプレート変数展開
+        if let message = config.message, message.contains("$") {
+            let gitInfo = config.cwd.map { GitInfo(cwd: $0) }
+            let context = TemplateContext(
+                cwd: config.cwd,
+                branch: gitInfo?.branch,
+                eventName: nil,
+                toolName: nil
+            )
+            config.message = TemplateExpander.expand(message, with: context)
+        }
+
+        // 5. 画像読み込み
         let imagePath = (config.imagePath as NSString).expandingTildeInPath
         guard let image = NSImage(contentsOfFile: imagePath) else {
             print("エラー: 画像を読み込めません: \(config.imagePath)")
@@ -319,7 +410,51 @@ public class PyokotifyAppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
+        // 6. サウンド再生
+        if let soundPath = config.soundPath {
+            soundPlayer = SoundPlayer()
+            soundPlayer?.play(path: soundPath)
+        }
+
+        // 7. コントローラー起動
         controller = PyokotifyController(config: config, image: image, fallbackCallerApp: callerApp)
         controller?.run()
+    }
+
+    /// Claude Code hooks モードの処理
+    private func processClaudeHooksMode(config: PyokotifyConfig) -> PyokotifyConfig {
+        var config = config
+
+        // 標準入力からJSONを読み取り
+        guard let hooksContext = ClaudeHooksContext.readFromStdin() else {
+            return config
+        }
+
+        // cwdを設定（明示的指定がない場合のみ）
+        if config.cwd == nil {
+            config.cwd = hooksContext.cwd
+        }
+
+        // Git情報を取得
+        let gitInfo = config.cwd.map { GitInfo(cwd: $0) }
+
+        // メッセージを設定（明示的指定がない場合のみ）
+        if config.message == nil {
+            config.message = hooksContext.generateDefaultMessage(
+                projectName: gitInfo?.repositoryName,
+                branch: gitInfo?.branch
+            )
+        } else if let message = config.message, message.contains("$") {
+            // テンプレート変数展開
+            let context = TemplateContext(
+                cwd: config.cwd,
+                branch: gitInfo?.branch,
+                eventName: hooksContext.event.rawValue,
+                toolName: hooksContext.toolName
+            )
+            config.message = TemplateExpander.expand(message, with: context)
+        }
+
+        return config
     }
 }

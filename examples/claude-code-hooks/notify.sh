@@ -1,69 +1,77 @@
 #!/bin/bash
 # pyokotify notification script for Claude Code hooks
+#
+# 新しい方法（推奨）:
+#   pyokotify を直接 Claude Code hooks から呼び出す場合は、
+#   このスクリプトは不要です。settings.json で直接指定できます:
+#
+#   {
+#     "hooks": {
+#       "Notification": [{
+#         "command": "pyokotify ~/image.png --claude-hooks -d 8"
+#       }]
+#     }
+#   }
+#
+# このスクリプトはカスタムメッセージやサウンドが必要な場合に使用します。
 
 INPUT=$(cat)
 
-# Configuration
+# ===== 設定 =====
 PYOKOTIFY="$HOME/.local/bin/pyokotify"
 PYOKOTIFY_IMAGE="$HOME/.claude/hooks/character.png"
+SOUNDS_DIR="$HOME/.claude/hooks/sounds"
 
-# Parse input
-EVENT_NAME=$(echo "$INPUT" | jq -r '.hook_event_name // "Unknown"')
+# 基本情報
 CWD=$(echo "$INPUT" | jq -r '.cwd // ""')
-PROJECT_NAME=$(basename "$CWD")
+DIR_NAME=$(basename "$CWD")
 
-# Git branch (if available)
-GIT_BRANCH=$(timeout 1 git -C "$CWD" branch --show-current 2>/dev/null || echo "")
+# ===== メッセージと音声の定義 =====
+# 配列: メッセージと対応する音声ファイルのペア
+declare -a GOROKU_TEXT
+declare -a GOROKU_SOUND
 
-# Project info
-if [ -n "$GIT_BRANCH" ]; then
-    PROJECT_INFO="[$PROJECT_NAME:$GIT_BRANCH]"
+GOROKU_TEXT+=("Done!")
+GOROKU_SOUND+=("done.mp3")
+
+GOROKU_TEXT+=("Task completed!")
+GOROKU_SOUND+=("complete.mp3")
+
+GOROKU_TEXT+=("Finished!")
+GOROKU_SOUND+=("finish.mp3")
+
+# カスタムメッセージを追加する場合は以下のように:
+# GOROKU_TEXT+=("カスタムメッセージ")
+# GOROKU_SOUND+=("custom.mp3")
+
+# ===== ランダム選択 =====
+IDX=$((RANDOM % ${#GOROKU_TEXT[@]}))
+RANDOM_GOROKU="${GOROKU_TEXT[$IDX]}"
+RANDOM_SOUND="${SOUNDS_DIR}/${GOROKU_SOUND[$IDX]}"
+
+# メッセージ: [ディレクトリ名] メッセージ
+if [ -n "$DIR_NAME" ]; then
+    MESSAGE="[$DIR_NAME] $RANDOM_GOROKU"
 else
-    PROJECT_INFO="[$PROJECT_NAME]"
+    MESSAGE="$RANDOM_GOROKU"
 fi
 
-# Message based on event
-case "$EVENT_NAME" in
-  "Notification")
-    NOTIFICATION_TYPE=$(echo "$INPUT" | jq -r '.notification_type // "unknown"')
-    case "$NOTIFICATION_TYPE" in
-      "permission_prompt")
-        MESSAGE="$PROJECT_INFO Permission required!"
-        ;;
-      *)
-        MESSAGE="$PROJECT_INFO Waiting for input!"
-        ;;
-    esac
-    ;;
-  "PreToolUse")
-    TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // "unknown"')
-    if [ "$TOOL_NAME" = "AskUserQuestion" ]; then
-      MESSAGE="$PROJECT_INFO Question for you!"
-    else
-      exit 0  # Don't notify for other tools
-    fi
-    ;;
-  "Stop")
-    MESSAGE="$PROJECT_INFO Done!"
-    ;;
-  *)
-    MESSAGE="$PROJECT_INFO $EVENT_NAME"
-    ;;
-esac
-
-# Run pyokotify
+# ===== pyokotify実行 =====
 if [ -f "$PYOKOTIFY" ] && [ -f "$PYOKOTIFY_IMAGE" ]; then
-    PYOKOTIFY_OPTS="-t \"$MESSAGE\" -d 8 -p 200"
+    # 配列で引数を管理（evalを避けてインジェクション対策）
+    PYOKOTIFY_ARGS=("-t" "$MESSAGE" "-d" "8" "-p" "200")
 
-    if [ -n "$TERM_PROGRAM" ]; then
-        PYOKOTIFY_OPTS="$PYOKOTIFY_OPTS --caller $TERM_PROGRAM"
-    fi
-
+    # CWD で特定ウィンドウにフォーカス
     if [ -n "$CWD" ]; then
-        PYOKOTIFY_OPTS="$PYOKOTIFY_OPTS --cwd $CWD"
+        PYOKOTIFY_ARGS+=("--cwd" "$CWD")
     fi
 
-    eval "\"$PYOKOTIFY\" \"$PYOKOTIFY_IMAGE\" $PYOKOTIFY_OPTS" &
+    # サウンド再生
+    if [ -f "$RANDOM_SOUND" ]; then
+        PYOKOTIFY_ARGS+=("--sound" "$RANDOM_SOUND")
+    fi
+
+    "$PYOKOTIFY" "$PYOKOTIFY_IMAGE" "${PYOKOTIFY_ARGS[@]}" &
 fi
 
 exit 0
