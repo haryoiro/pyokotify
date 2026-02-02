@@ -176,9 +176,48 @@ public enum WindowDetectorUtils {
         return false
     }
 
-    // MARK: - レガシー（VSCode固有処理用）
+    // MARK: - Unixソケット検索（lsof使用）
 
-    /// コマンドを実行して出力を取得（VSCodeのIPC Handle検出用に残す）
+    /// 指定パスを含むUnixソケットを持つプロセスのPIDを検索
+    /// - Parameter socketPathPart: ソケットパスに含まれる文字列（例: "vscode-git-abc123"）
+    /// - Returns: マッチしたプロセスのPID、見つからない場合はnil
+    public static func findPidWithUnixSocket(containing socketPathPart: String) -> pid_t? {
+        let output = runCommand("/usr/sbin/lsof", arguments: ["-U"])
+        guard let output = output else { return nil }
+
+        for line in output.components(separatedBy: "\n") {
+            if line.contains(socketPathPart) {
+                let parts = line.components(separatedBy: .whitespaces).filter { !$0.isEmpty }
+                if parts.count >= 2, let pid = Int32(parts[1]) {
+                    return pid
+                }
+            }
+        }
+        return nil
+    }
+
+    // MARK: - プロセス環境変数取得
+
+    /// プロセスのPWD環境変数を取得（ps経由）
+    public static func getProcessPwd(pid: pid_t) -> String? {
+        let output = runCommand("/bin/ps", arguments: ["eww", "-o", "command=", "-p", "\(pid)"])
+        guard let output = output else { return nil }
+
+        // スペースまたは先頭に続くPWD=にマッチ（OLDPWDを除外）
+        let pattern = "(?:^|\\s)PWD=([^\\s]+)"
+        guard let regex = try? NSRegularExpression(pattern: pattern),
+              let match = regex.firstMatch(in: output, range: NSRange(output.startIndex..., in: output)),
+              let range = Range(match.range(at: 1), in: output)
+        else {
+            return nil
+        }
+
+        return String(output[range])
+    }
+
+    // MARK: - コマンド実行（PWD取得用に残す）
+
+    /// コマンドを実行して出力を取得
     public static func runCommand(_ path: String, arguments: [String], timeout: TimeInterval = 5.0) -> String? {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: path)
