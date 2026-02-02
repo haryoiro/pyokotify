@@ -162,6 +162,20 @@ main() {
   mv "$temp_dir/pyokotify" "$INSTALL_DIR/"
   chmod +x "$INSTALL_DIR/pyokotify"
 
+  # Create manifest.json
+  MANIFEST_DIR="${HOME}/.local/share/pyokotify"
+  mkdir -p "$MANIFEST_DIR"
+  cat > "$MANIFEST_DIR/manifest.json" << EOF
+{
+  "version": "$version",
+  "installed_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "files": [
+    "$INSTALL_DIR/pyokotify"
+  ]
+}
+EOF
+  debug "Created manifest: $MANIFEST_DIR/manifest.json"
+
   success "Installed pyokotify $version"
 
   # PATH check and guidance

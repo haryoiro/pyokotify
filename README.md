@@ -21,7 +21,20 @@ curl -fsSL https://raw.githubusercontent.com/haryoiro/pyokotify/main/install.sh 
 
 `~/.local/bin` にインストールされます。
 
+### アンインストール
+
+```console
+pyokotify uninstall
+```
+
+確認なしでアンインストールする場合は `-y` オプションを使用:
+
+```console
+pyokotify uninstall -y
+```
+
 **環境変数:**
+
 - `PYOKOTIFY_QUIET=1` - 出力を抑制
 - `PYOKOTIFY_DEBUG=1` - デバッグ出力を有効化
 
@@ -60,6 +73,7 @@ pyokotify ~/Pictures/character.png -t "タスク完了！"
 | `--random-direction`     | ランダムな方向から出現（下/左/右）         |
 | `--min <秒>`             | ランダムモードの最小間隔（デフォルト: 30） |
 | `--max <秒>`             | ランダムモードの最大間隔（デフォルト: 120）|
+| `-v, --version`          | バージョンを表示                           |
 | `-h, --help`             | ヘルプを表示                               |
 
 ## Hooks 連携

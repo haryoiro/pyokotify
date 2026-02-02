@@ -187,6 +187,11 @@ extension PyokotifyConfig {
 
             使い方:
                 pyokotify <画像パス> [オプション]
+                pyokotify uninstall [-y]
+                pyokotify --version
+
+            サブコマンド:
+                uninstall              pyokotifyをアンインストール
 
             オプション:
                 -d, --duration <秒>    表示時間（デフォルト: 3.0秒）

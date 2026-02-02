@@ -20,6 +20,13 @@ jobs:
       - name: Show Swift version
         run: swift --version
 
+      - name: Update Version.swift
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          sed -i '' "s/public static let current = \".*\"/public static let current = \"$VERSION\"/" Sources/PyokotifyCore/Version.swift
+          echo "Updated version to: $VERSION"
+          cat Sources/PyokotifyCore/Version.swift
+
       - name: Build for Apple Silicon
         run: swift build -c release --arch arm64
 
