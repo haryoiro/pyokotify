@@ -18,8 +18,8 @@ public struct PyokotifyConfig {
     public var message: String?
     public var callerApp: String?
     public var cwd: String?
-    // Claude Code hooks 連携
-    public var claudeHooksMode: Bool
+    // Hooks連携（Claude Code / GitHub Copilot CLI）
+    public var hooksMode: Bool
     public var soundPath: String?
     public var autoDetectCaller: Bool
 
@@ -38,7 +38,7 @@ public struct PyokotifyConfig {
         message: String? = nil,
         callerApp: String? = nil,
         cwd: String? = nil,
-        claudeHooksMode: Bool = false,
+        hooksMode: Bool = false,
         soundPath: String? = nil,
         autoDetectCaller: Bool = true
     ) {
@@ -56,7 +56,7 @@ public struct PyokotifyConfig {
         self.message = message
         self.callerApp = callerApp
         self.cwd = cwd
-        self.claudeHooksMode = claudeHooksMode
+        self.hooksMode = hooksMode
         self.soundPath = soundPath
         self.autoDetectCaller = autoDetectCaller
     }
@@ -147,7 +147,7 @@ extension PyokotifyConfig {
                     i += 1
                 }
             case "--hooks", "--claude-hooks":
-                config.claudeHooksMode = true
+                config.hooksMode = true
             case "-s", "--sound":
                 if i + 1 < arguments.count {
                     config.soundPath = arguments[i + 1]

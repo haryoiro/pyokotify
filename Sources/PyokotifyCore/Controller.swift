@@ -381,7 +381,7 @@ public class PyokotifyAppDelegate: NSObject, NSApplicationDelegate {
         }
 
         // 2. Hooks モード処理（Claude Code / GitHub Copilot CLI 自動検出）
-        if config.claudeHooksMode {
+        if config.hooksMode {
             config = processHooksMode(config: config)
         }
 

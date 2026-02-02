@@ -3,8 +3,8 @@ import Testing
 
 @testable import PyokotifyCore
 
-@Suite("Claude Hooks Tests")
-struct ClaudeHooksTests {
+@Suite("Claude Code Hooks Tests")
+struct ClaudeCodeHooksTests {
 
     @Test("JSONを正しく解析")
     func parseJson() throws {
