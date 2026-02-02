@@ -146,7 +146,7 @@ extension PyokotifyConfig {
                     config.cwd = arguments[i + 1]
                     i += 1
                 }
-            case "--claude-hooks":
+            case "--hooks", "--claude-hooks":
                 config.claudeHooksMode = true
             case "-s", "--sound":
                 if i + 1 < arguments.count {
@@ -203,8 +203,9 @@ extension PyokotifyConfig {
                 --max <秒>             ランダムモードの最大間隔（デフォルト: 120秒）
                 -h, --help             ヘルプを表示
 
-            Claude Code hooks:
-                --claude-hooks         標準入力からClaude Code hooks JSONを読み取る
+            Hooks連携（Claude Code / GitHub Copilot CLI 自動検出）:
+                --hooks                標準入力からhooks JSONを読み取る（自動検出）
+                --claude-hooks         --hooks のエイリアス
                 --no-auto-detect       親プロセス自動検出を無効化
 
             サウンド:
@@ -214,14 +215,14 @@ extension PyokotifyConfig {
                 $dir                   ディレクトリ名
                 $branch                Gitブランチ名
                 $cwd                   フルパス
-                $event                 イベント名（Claude hooks）
-                $tool                  ツール名（Claude hooks）
+                $event                 イベント名
+                $tool                  ツール名
 
             例:
                 pyokotify ~/Pictures/zundamon.png
                 pyokotify ~/Pictures/zundamon.png -d 5 -p 300
                 pyokotify ~/Pictures/zundamon.png -t "タスク完了なのだ！"
-                pyokotify ~/Pictures/zundamon.png --claude-hooks -t "[$dir:$branch] Done!"
+                pyokotify ~/Pictures/zundamon.png --hooks -t "[$dir:$branch] Done!"
             """)
     }
 }

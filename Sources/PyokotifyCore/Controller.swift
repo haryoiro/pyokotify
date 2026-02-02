@@ -380,9 +380,9 @@ public class PyokotifyAppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        // 2. Claude Code hooks モード処理
+        // 2. Hooks モード処理（Claude Code / GitHub Copilot CLI 自動検出）
         if config.claudeHooksMode {
-            config = processClaudeHooksMode(config: config)
+            config = processHooksMode(config: config)
         }
 
         // 3. 親プロセス自動検出（callerAppが未指定の場合）
@@ -421,12 +421,12 @@ public class PyokotifyAppDelegate: NSObject, NSApplicationDelegate {
         controller?.run()
     }
 
-    /// Claude Code hooks モードの処理
-    private func processClaudeHooksMode(config: PyokotifyConfig) -> PyokotifyConfig {
+    /// Hooks モードの処理（Claude Code / GitHub Copilot CLI 自動検出）
+    private func processHooksMode(config: PyokotifyConfig) -> PyokotifyConfig {
         var config = config
 
-        // 標準入力からJSONを読み取り
-        guard let hooksContext = ClaudeHooksContext.readFromStdin() else {
+        // 標準入力からJSONを読み取り（自動検出）
+        guard let hooksContext = HooksContext.readFromStdin() else {
             return config
         }
 
@@ -446,10 +446,18 @@ public class PyokotifyAppDelegate: NSObject, NSApplicationDelegate {
             )
         } else if let message = config.message, message.contains("$") {
             // テンプレート変数展開
+            let eventName: String
+            switch hooksContext.source {
+            case .claudeCode:
+                eventName = hooksContext.claudeContext?.event.rawValue ?? hooksContext.event.rawValue
+            case .copilot:
+                eventName = hooksContext.event.rawValue
+            }
+
             let context = TemplateContext(
                 cwd: config.cwd,
                 branch: gitInfo?.branch,
-                eventName: hooksContext.event.rawValue,
+                eventName: eventName,
                 toolName: hooksContext.toolName
             )
             config.message = TemplateExpander.expand(message, with: context)

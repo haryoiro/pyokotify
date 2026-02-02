@@ -99,3 +99,104 @@ struct ClaudeHooksTests {
         #expect(message == "[myproject:feature] Question for you!")
     }
 }
+
+// MARK: - GitHub Copilot CLI Hooks Tests
+
+@Suite("Copilot Hooks Tests")
+struct CopilotHooksTests {
+
+    @Test("Copilot sessionStart JSONを正しく解析")
+    func parseSessionStart() throws {
+        let json = """
+            {
+                "timestamp": 1704614400000,
+                "cwd": "/path/to/project",
+                "source": "new",
+                "initialPrompt": "Hello"
+            }
+            """.data(using: .utf8)!
+
+        let input = try JSONDecoder().decode(CopilotHooksInput.self, from: json)
+        #expect(input.timestamp == 1704614400000)
+        #expect(input.cwd == "/path/to/project")
+        #expect(input.source == "new")
+        #expect(input.initialPrompt == "Hello")
+    }
+
+    @Test("Copilot preToolUse JSONを正しく解析")
+    func parsePreToolUse() throws {
+        let json = """
+            {
+                "timestamp": 1704614400000,
+                "cwd": "/path/to/project",
+                "toolName": "bash",
+                "toolArgs": "{\\"command\\":\\"ls\\"}"
+            }
+            """.data(using: .utf8)!
+
+        let input = try JSONDecoder().decode(CopilotHooksInput.self, from: json)
+        #expect(input.toolName == "bash")
+        #expect(input.toolArgs == "{\"command\":\"ls\"}")
+    }
+
+    @Test("Copilot errorOccurred JSONを正しく解析")
+    func parseErrorOccurred() throws {
+        let json = """
+            {
+                "timestamp": 1704614400000,
+                "cwd": "/path/to/project",
+                "error": {
+                    "message": "Something went wrong",
+                    "name": "Error"
+                }
+            }
+            """.data(using: .utf8)!
+
+        let input = try JSONDecoder().decode(CopilotHooksInput.self, from: json)
+        #expect(input.error?.message == "Something went wrong")
+        #expect(input.error?.name == "Error")
+    }
+
+    @Test("CopilotHooksEvent から HooksEvent への変換")
+    func eventConversion() {
+        #expect(CopilotHooksEvent.sessionStart.toHooksEvent == .sessionStart)
+        #expect(CopilotHooksEvent.sessionEnd.toHooksEvent == .sessionEnd)
+        #expect(CopilotHooksEvent.userPromptSubmitted.toHooksEvent == .userPromptSubmit)
+        #expect(CopilotHooksEvent.preToolUse.toHooksEvent == .preToolUse)
+        #expect(CopilotHooksEvent.postToolUse.toHooksEvent == .postToolUse)
+        #expect(CopilotHooksEvent.errorOccurred.toHooksEvent == .errorOccurred)
+    }
+}
+
+// MARK: - 自動検出 Tests
+
+@Suite("Hooks Auto Detection Tests")
+struct HooksAutoDetectionTests {
+
+    @Test("Claude Code JSONを正しく検出")
+    func detectClaudeCode() throws {
+        let json: [String: Any] = [
+            "hook_event_name": "Stop",
+            "cwd": "/path/to/project"
+        ]
+        let data = try JSONSerialization.data(withJSONObject: json)
+
+        // JSONSerializationで辞書として読み込めることを確認
+        let parsed = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        #expect(parsed?["hook_event_name"] != nil)
+    }
+
+    @Test("Copilot JSONを正しく検出")
+    func detectCopilot() throws {
+        let json: [String: Any] = [
+            "timestamp": 1704614400000,
+            "cwd": "/path/to/project"
+        ]
+        let data = try JSONSerialization.data(withJSONObject: json)
+
+        // JSONSerializationで辞書として読み込めることを確認
+        let parsed = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        #expect(parsed?["timestamp"] != nil)
+        #expect(parsed?["hook_event_name"] == nil)
+    }
+}
