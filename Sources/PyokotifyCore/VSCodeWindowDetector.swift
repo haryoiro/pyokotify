@@ -11,9 +11,9 @@ public enum VSCodeWindowDetector {
     /// - Parameter cwd: 作業ディレクトリ
     /// - Returns: フォーカスに成功した場合はtrue
     public static func focusCurrentWindow(cwd: String? = nil) -> Bool {
-        // 方法1: cwdからプロジェクト名でマッチング
-        if let cwd = cwd {
-            let projectName = (cwd as NSString).lastPathComponent
+        // 方法1: VSCODE_GIT_IPC_HANDLE からPlugin PIDを特定し、そのPWDでウィンドウをマッチ
+        if let pluginPwd = detectPluginPwdFromIpcHandle() {
+            let projectName = (pluginPwd as NSString).lastPathComponent
             if !projectName.isEmpty {
                 if WindowDetectorUtils.focusWindowByTitle(projectName, bundleIds: bundleIds) {
                     return true
@@ -21,9 +21,9 @@ public enum VSCodeWindowDetector {
             }
         }
 
-        // 方法2: VSCODE_GIT_IPC_HANDLE からPlugin PIDを特定し、そのPWDでウィンドウをマッチ
-        if let pluginPwd = detectPluginPwdFromIpcHandle() {
-            let projectName = (pluginPwd as NSString).lastPathComponent
+        // 方法2: cwdからプロジェクト名でマッチング
+        if let cwd = cwd {
+            let projectName = (cwd as NSString).lastPathComponent
             if !projectName.isEmpty {
                 if WindowDetectorUtils.focusWindowByTitle(projectName, bundleIds: bundleIds) {
                     return true
