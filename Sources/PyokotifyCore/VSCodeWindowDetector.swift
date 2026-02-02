@@ -11,7 +11,7 @@ public enum VSCodeWindowDetector {
     /// - Parameter cwd: 作業ディレクトリ（指定された場合はこれを優先してウィンドウを特定）
     /// - Returns: フォーカスに成功した場合はtrue
     public static func focusCurrentWindow(cwd: String? = nil) -> Bool {
-        // 方法1: 明示的に指定されたcwdからプロジェクト名でマッチング（最も確実）
+        // 方法1: 明示的に指定されたcwdからプロジェクト名でマッチング
         if let cwd = cwd {
             let projectName = (cwd as NSString).lastPathComponent
             if !projectName.isEmpty {
@@ -21,9 +21,9 @@ public enum VSCodeWindowDetector {
             }
         }
 
-        // 方法2: VSCODE_GIT_IPC_HANDLE からプロジェクトパスを取得してマッチング
-        if let projectPath = detectProjectPathFromIpcHandle() {
-            let projectName = (projectPath as NSString).lastPathComponent
+        // 方法2: VSCODE_GIT_IPC_HANDLE からPlugin PIDを特定し、そのPWDでウィンドウをマッチ
+        if let pluginPwd = detectPluginPwdFromIpcHandle() {
+            let projectName = (pluginPwd as NSString).lastPathComponent
             if !projectName.isEmpty {
                 if WindowDetectorUtils.focusWindowByTitle(projectName, bundleIds: bundleIds) {
                     return true
@@ -44,10 +44,9 @@ public enum VSCodeWindowDetector {
 
     // MARK: - VSCode固有: IPC Handle検出
 
-    /// VSCODE_GIT_IPC_HANDLEからプロジェクトパスを特定
-    private static func detectProjectPathFromIpcHandle() -> String? {
-        guard let ipcHandle = ProcessInfo.processInfo.environment["VSCODE_GIT_IPC_HANDLE"]
-        else {
+    /// VSCODE_GIT_IPC_HANDLEからPlugin PIDを特定し、そのPWDを取得
+    private static func detectPluginPwdFromIpcHandle() -> String? {
+        guard let ipcHandle = ProcessInfo.processInfo.environment["VSCODE_GIT_IPC_HANDLE"] else {
             return nil
         }
 
@@ -59,28 +58,33 @@ public enum VSCodeWindowDetector {
             return nil
         }
 
-        guard let rendererPid = findRelatedRendererPid(pluginPid: pluginPid) else {
+        return getProcessPwd(pid: pluginPid)
+    }
+
+    /// プロセスのPWD環境変数を取得
+    private static func getProcessPwd(pid: pid_t) -> String? {
+        let output = WindowDetectorUtils.runCommand("/bin/ps", arguments: ["eww", "-o", "command=", "-p", "\(pid)"])
+        guard let output = output else { return nil }
+
+        let pattern = "PWD=([^\\s]+)"
+        guard let regex = try? NSRegularExpression(pattern: pattern),
+              let match = regex.firstMatch(in: output, range: NSRange(output.startIndex..., in: output)),
+              let range = Range(match.range(at: 1), in: output) else {
             return nil
         }
 
-        // Rendererプロセスのコマンドラインからプロジェクトパスを取得
-        return getProjectPath(forPid: rendererPid)
+        return String(output[range])
     }
 
     /// ソケットパスからIDを抽出
     private static func extractSocketId(from path: String) -> String? {
         let pattern = "vscode-git-([a-f0-9]+)\\.sock"
         guard let regex = try? NSRegularExpression(pattern: pattern),
-            let match = regex.firstMatch(
-                in: path, range: NSRange(path.startIndex..., in: path))
-        else {
+              let match = regex.firstMatch(in: path, range: NSRange(path.startIndex..., in: path)),
+              let range = Range(match.range(at: 1), in: path) else {
             return nil
         }
-
-        if let range = Range(match.range(at: 1), in: path) {
-            return String(path[range])
-        }
-        return nil
+        return String(path[range])
     }
 
     /// lsofでソケットを持つCode Helper (Plugin) PIDを取得
@@ -96,75 +100,6 @@ public enum VSCodeWindowDetector {
                 }
             }
         }
-        return nil
-    }
-
-    /// 同時刻に起動したRendererプロセスを探す
-    private static func findRelatedRendererPid(pluginPid: pid_t) -> pid_t? {
-        guard let pluginStartTime = getProcessStartTime(pid: pluginPid) else {
-            return nil
-        }
-
-        let output = WindowDetectorUtils.runCommand(
-            "/bin/ps", arguments: ["-A", "-o", "pid,lstart,comm"])
-        guard let output = output else { return nil }
-
-        for line in output.components(separatedBy: "\n") {
-            if line.contains("Code Helper (Renderer)") {
-                let parts = line.trimmingCharacters(in: .whitespaces)
-                    .components(separatedBy: .whitespaces)
-                    .filter { !$0.isEmpty }
-
-                if parts.count >= 6, let pid = Int32(parts[0]) {
-                    if let startTime = getProcessStartTime(pid: pid),
-                        abs(startTime.timeIntervalSince(pluginStartTime)) < 2.0
-                    {
-                        return pid
-                    }
-                }
-            }
-        }
-        return nil
-    }
-
-    /// プロセスの起動時刻を取得
-    private static func getProcessStartTime(pid: pid_t) -> Date? {
-        let output = WindowDetectorUtils.runCommand("/bin/ps", arguments: ["-o", "lstart=", "-p", "\(pid)"])
-        guard let output = output?.trimmingCharacters(in: .whitespacesAndNewlines),
-            !output.isEmpty
-        else {
-            return nil
-        }
-
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ja_JP")
-        formatter.dateFormat = "EEE MMM d HH:mm:ss yyyy"
-
-        if let date = formatter.date(from: output) {
-            return date
-        }
-
-        formatter.locale = Locale(identifier: "en_US")
-        return formatter.date(from: output)
-    }
-
-    /// プロセスのコマンドラインからプロジェクトパスを取得
-    private static func getProjectPath(forPid pid: pid_t) -> String? {
-        let output = WindowDetectorUtils.runCommand("/bin/ps", arguments: ["-o", "args=", "-p", "\(pid)"])
-        guard let output = output else { return nil }
-
-        // --folder-uri=file:///path/to/project 形式からパスを抽出
-        let folderPattern = "folder-uri=file://([^\\s]+)"
-        if let regex = try? NSRegularExpression(pattern: folderPattern),
-            let match = regex.firstMatch(in: output, range: NSRange(output.startIndex..., in: output)),
-            let range = Range(match.range(at: 1), in: output)
-        {
-            let encodedPath = String(output[range])
-            // URLデコード
-            return encodedPath.removingPercentEncoding ?? encodedPath
-        }
-
-        // フォールバック: vscode-window-configからは取得できないのでnilを返す
         return nil
     }
 }

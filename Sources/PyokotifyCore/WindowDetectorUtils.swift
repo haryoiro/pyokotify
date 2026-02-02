@@ -179,7 +179,7 @@ public enum WindowDetectorUtils {
     // MARK: - レガシー（VSCode固有処理用）
 
     /// コマンドを実行して出力を取得（VSCodeのIPC Handle検出用に残す）
-    public static func runCommand(_ path: String, arguments: [String], timeout: TimeInterval = 2.0) -> String? {
+    public static func runCommand(_ path: String, arguments: [String], timeout: TimeInterval = 5.0) -> String? {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: path)
         process.arguments = arguments
@@ -188,22 +188,32 @@ public enum WindowDetectorUtils {
         process.standardOutput = pipe
         process.standardError = FileHandle.nullDevice
 
+        // 出力を非同期で収集（パイプバッファ溢れ防止）
+        var outputData = Data()
+        let readQueue = DispatchQueue(label: "runCommand.read")
+        pipe.fileHandleForReading.readabilityHandler = { handle in
+            let data = handle.availableData
+            readQueue.sync {
+                outputData.append(data)
+            }
+        }
+
         do {
             try process.run()
+            process.waitUntilExit()
 
-            let deadline = Date().addingTimeInterval(timeout)
-            while process.isRunning && Date() < deadline {
-                Thread.sleep(forTimeInterval: 0.01)
+            // 読み取りハンドラを解除
+            pipe.fileHandleForReading.readabilityHandler = nil
+
+            // 残りのデータを読み取り
+            let remainingData = pipe.fileHandleForReading.readDataToEndOfFile()
+            readQueue.sync {
+                outputData.append(remainingData)
             }
 
-            if process.isRunning {
-                process.terminate()
-                return nil
-            }
-
-            let data = pipe.fileHandleForReading.readDataToEndOfFile()
-            return String(data: data, encoding: .utf8)
+            return String(data: outputData, encoding: .utf8)
         } catch {
+            pipe.fileHandleForReading.readabilityHandler = nil
             return nil
         }
     }
