@@ -1,32 +1,23 @@
 {
   "hooks": {
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/notify.sh"
-          }
-        ]
-      }
-    ],
     "Notification": [
       {
+        "matcher": "",
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/notify.sh"
+            "command": "pyokotify ~/.claude/hooks/character.png --hooks -d 8 -p 200"
           }
         ]
       }
     ],
-    "PreToolUse": [
+    "Stop": [
       {
-        "matcher": "AskUserQuestion",
+        "matcher": "",
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/notify.sh"
+            "command": "pyokotify ~/.claude/hooks/character.png --hooks -t '[$dir:$branch] Done!' -d 5"
           }
         ]
       }

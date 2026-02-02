@@ -44,47 +44,49 @@ pyokotify ~/Pictures/character.png -t "タスク完了！"
 
 ## オプション
 
-```
--d, --duration <秒>        表示時間（デフォルト: 3.0）
--a, --animation <秒>       アニメーション時間（デフォルト: 0.4）
--p, --peek <px>            顔を出す高さ（デフォルト: 200）
--m, --margin <px>          端からのマージン（デフォルト: 50）
--t, --text <メッセージ>     吹き出しでメッセージを表示
--c, --caller <アプリ>       クリック時に戻るアプリ（TERM_PROGRAM 値）
-    --cwd <パス>           このパスを含むウィンドウにフォーカス
-    --no-click             クリック無効化（マウスイベントを通過）
--r, --random               ランダム間隔で繰り返し表示
-    --random-direction     ランダムな方向から出現（下/左/右）
-    --min <秒>             ランダムモードの最小間隔（デフォルト: 30）
-    --max <秒>             ランダムモードの最大間隔（デフォルト: 120）
--h, --help                 ヘルプを表示
-```
+| オプション               | 説明                                       |
+| ------------------------ | ------------------------------------------ |
+| `-d, --duration <秒>`    | 表示時間（デフォルト: 3.0）                |
+| `-a, --animation <秒>`   | アニメーション時間（デフォルト: 0.4）      |
+| `-p, --peek <px>`        | 顔を出す高さ（デフォルト: 200）            |
+| `-m, --margin <px>`      | 端からのマージン（デフォルト: 50）         |
+| `-t, --text <メッセージ>` | 吹き出しでメッセージを表示                 |
+| `-s, --sound <パス>`     | 通知時に音声を再生                         |
+| `-c, --caller <アプリ>`  | クリック時に戻るアプリ                     |
+| `--cwd <パス>`           | 作業ディレクトリ（特定ウィンドウにフォーカス）|
+| `--no-click`             | クリック無効化（マウスイベントを通過）     |
+| `--hooks`                | 標準入力から hooks JSON を読み取る         |
+| `-r, --random`           | ランダム間隔で繰り返し表示                 |
+| `--random-direction`     | ランダムな方向から出現（下/左/右）         |
+| `--min <秒>`             | ランダムモードの最小間隔（デフォルト: 30） |
+| `--max <秒>`             | ランダムモードの最大間隔（デフォルト: 120）|
+| `-h, --help`             | ヘルプを表示                               |
 
 ## Claude Code との連携
 
 pyokotify は [Claude Code](https://docs.anthropic.com/en/docs/claude-code) の hooks と連携できます。Claude が応答を待っているときに通知を受け取れます。
 
-Stop, Notification, AskUserQuestion イベントの完全なセットアップは [examples/claude-code-hooks](examples/claude-code-hooks) を参照してください。
+`--hooks` オプションを使うと、標準入力から hooks JSON を読み取り、cwd や caller が自動設定されます。
 
-簡単な例 - `~/.claude/settings.json` に追加:
+`~/.claude/settings.json` に追加:
 
 ```json
 {
   "hooks": {
-    "AskUserQuestion": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "pyokotify ~/Pictures/character.png -t 'Claudeから質問があるよ' -c $TERM_PROGRAM --cwd $PWD"
-          }
-        ]
-      }
-    ]
+    "Stop": [{
+      "matcher": "",
+      "hooks": [{
+        "type": "command",
+        "command": "pyokotify ~/Pictures/character.png --hooks -t '[$dir:$branch] Done!'"
+      }]
+    }]
   }
 }
 ```
+
+テンプレート変数 (`-t` で使用可能): `$dir`, `$branch`, `$cwd`, `$event`, `$tool`
+
+詳細は [examples/claude-code-hooks](examples/claude-code-hooks) を参照してください。
 
 ## 使用例
 
@@ -116,17 +118,14 @@ SSH 接続通知など、様々なシナリオで活用できます。
 
 `--caller` オプションはこの権限なしで動作します。
 
-## TERM_PROGRAM の値
+## 対応エディター
 
-| ターミナル   | 値               |
-| ------------ | ---------------- |
-| VSCode       | `vscode`         |
-| iTerm2       | `iTerm.app`      |
-| Terminal.app | `Apple_Terminal` |
-| Ghostty      | `ghostty`        |
-| Warp         | `WarpTerminal`   |
-| Alacritty    | `Alacritty`      |
-| kitty        | `kitty`          |
+`--cwd` オプションで正しいウィンドウにフォーカスできるエディター:
+
+| エディター    | 備考                                         |
+| ------------- | -------------------------------------------- |
+| VSCode 系     | VSCode, Insiders, VSCodium, Cursor           |
+| JetBrains 系  | IntelliJ, WebStorm, PyCharm, GoLand など全般 |
 
 ## ライセンス
 
