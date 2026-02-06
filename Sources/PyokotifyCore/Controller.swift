@@ -257,18 +257,27 @@ extension PyokotifyController {
 
     /// VSCode環境かどうかを判定
     private func isVSCodeEnvironment() -> Bool {
-        // TERM_PROGRAM または callerApp が VSCode を示している
-        if let termProgram = ProcessInfo.processInfo.environment["TERM_PROGRAM"],
-            termProgram.lowercased().contains("vscode")
-        {
-            return true
+        // プロセスツリーから検出したアプリを最優先
+        if let caller = config.callerApp {
+            let lowerCaller = caller.lowercased()
+            if lowerCaller.contains("vscode") {
+                return true
+            }
+            // 他のターミナル（ghostty, iterm等）が検出されていたらVSCodeではない
+            return false
         }
-        if let caller = config.callerApp,
-            caller.lowercased().contains("vscode")
-        {
-            return true
+
+        // TERM_PROGRAM で判定
+        if let termProgram = ProcessInfo.processInfo.environment["TERM_PROGRAM"] {
+            let lowerTermProgram = termProgram.lowercased()
+            if lowerTermProgram.contains("vscode") {
+                return true
+            }
+            // 他のターミナルが明示されていればVSCodeではない
+            return false
         }
-        // VSCODE_GIT_IPC_HANDLE が設定されている
+
+        // callerAppもTERM_PROGRAMも未設定の場合のみ、VSCODE_GIT_IPC_HANDLEを参照
         if ProcessInfo.processInfo.environment["VSCODE_GIT_IPC_HANDLE"] != nil {
             return true
         }
@@ -284,7 +293,18 @@ extension PyokotifyController {
             "datagrip", "fleet",
         ]
 
-        // __CFBundleIdentifier が JetBrains IDE を示している（最も信頼性が高い）
+        // プロセスツリーから検出したアプリを最優先
+        if let caller = config.callerApp?.lowercased() {
+            for name in jetBrainsNames {
+                if caller.contains(name) {
+                    return true
+                }
+            }
+            // 他のターミナル（ghostty, iterm等）が検出されていたらJetBrainsではない
+            return false
+        }
+
+        // __CFBundleIdentifier が JetBrains IDE を示している
         if let bundleId = ProcessInfo.processInfo.environment["__CFBundleIdentifier"],
             bundleId.contains("jetbrains")
         {
@@ -296,15 +316,6 @@ extension PyokotifyController {
             termEmulator.contains("JetBrains")
         {
             return true
-        }
-
-        // callerApp が JetBrains IDE を示している
-        if let caller = config.callerApp?.lowercased() {
-            for name in jetBrainsNames {
-                if caller.contains(name) {
-                    return true
-                }
-            }
         }
 
         // __INTELLIJ_COMMAND_HISTFILE__ が設定されている（IntelliJターミナル固有）
@@ -346,13 +357,28 @@ extension PyokotifyController {
             return false
         }
 
+        // フルパスでマッチするウィンドウを優先的に探す（Ghostty等）
+        for window in windows {
+            var titleRef: CFTypeRef?
+            AXUIElementCopyAttributeValue(window, kAXTitleAttribute as CFString, &titleRef)
+
+            if let title = titleRef as? String, title.contains(cwd) {
+                WindowDetectorUtils.moveWindowToCurrentSpace(window)
+                AXUIElementPerformAction(window, kAXRaiseAction as CFString)
+                app.activate(options: [.activateAllWindows, .activateIgnoringOtherApps])
+                return true
+            }
+        }
+
+        // フォールバック: フォルダ名でマッチ（VSCode等）
         for window in windows {
             var titleRef: CFTypeRef?
             AXUIElementCopyAttributeValue(window, kAXTitleAttribute as CFString, &titleRef)
 
             if let title = titleRef as? String, title.contains(folderName) {
+                WindowDetectorUtils.moveWindowToCurrentSpace(window)
                 AXUIElementPerformAction(window, kAXRaiseAction as CFString)
-                app.activate(options: [.activateIgnoringOtherApps])
+                app.activate(options: [.activateAllWindows, .activateIgnoringOtherApps])
                 return true
             }
         }

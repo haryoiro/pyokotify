@@ -3,6 +3,23 @@ import ApplicationServices
 import Darwin
 import Foundation
 
+// MARK: - CGS プライベートAPI宣言
+
+private typealias CGSConnectionID = UInt32
+private typealias CGSSpaceID = UInt64
+
+@_silgen_name("CGSMainConnectionID")
+private func CGSMainConnectionID() -> CGSConnectionID
+
+@_silgen_name("CGSGetActiveSpace")
+private func CGSGetActiveSpace(_ cid: CGSConnectionID) -> CGSSpaceID
+
+@_silgen_name("CGSMoveWindowsToManagedSpace")
+private func CGSMoveWindowsToManagedSpace(_ cid: CGSConnectionID, _ windows: CFArray, _ space: CGSSpaceID)
+
+@_silgen_name("_AXUIElementGetWindow")
+private func _AXUIElementGetWindow(_ element: AXUIElement, _ outWindow: UnsafeMutablePointer<CGWindowID>) -> AXError
+
 /// ウィンドウ検出の共通ユーティリティ
 public enum WindowDetectorUtils {
 
@@ -119,6 +136,48 @@ public enum WindowDetectorUtils {
         return (cwd as NSString).lastPathComponent
     }
 
+    // MARK: - Space移動（CGSプライベートAPI）
+
+    /// AXUIElementからCGWindowIDを取得
+    private static func getWindowID(from axWindow: AXUIElement) -> CGWindowID? {
+        var windowID: CGWindowID = 0
+        let result = _AXUIElementGetWindow(axWindow, &windowID)
+        return result == .success ? windowID : nil
+    }
+
+    /// 指定ウィンドウを現在のSpaceに移動
+    /// - Parameter windowID: 移動するウィンドウのID
+    public static func moveWindowToCurrentSpace(_ windowID: CGWindowID) {
+        let cid = CGSMainConnectionID()
+        let currentSpace = CGSGetActiveSpace(cid)
+        let windowArray = [windowID] as CFArray
+        CGSMoveWindowsToManagedSpace(cid, windowArray, currentSpace)
+    }
+
+    /// AXUIElementのウィンドウを現在のSpaceに移動
+    /// - Parameter axWindow: 移動するウィンドウのAXUIElement
+    /// - Returns: 移動に成功した場合はtrue
+    @discardableResult
+    public static func moveWindowToCurrentSpace(_ axWindow: AXUIElement) -> Bool {
+        guard let windowID = getWindowID(from: axWindow) else {
+            return false
+        }
+        moveWindowToCurrentSpace(windowID)
+        return true
+    }
+
+    // MARK: - デバッグ出力
+
+    private static var debugEnabled: Bool {
+        ProcessInfo.processInfo.environment["PYOKOTIFY_DEBUG"] != nil
+    }
+
+    private static func debug(_ message: String) {
+        if debugEnabled {
+            fputs("[pyokotify] \(message)\n", stderr)
+        }
+    }
+
     // MARK: - ウィンドウフォーカス
 
     /// アプリ内でタイトルにマッチするウィンドウをフォーカス
@@ -128,24 +187,44 @@ public enum WindowDetectorUtils {
         let pid = app.processIdentifier
         let axApp = AXUIElementCreateApplication(pid)
 
+        debug("focusWindowInApp: app=\(app.localizedName ?? "unknown"), pid=\(pid), titlePart=\(titlePart)")
+
         var windowsRef: CFTypeRef?
         let result = AXUIElementCopyAttributeValue(axApp, kAXWindowsAttribute as CFString, &windowsRef)
 
         guard result == .success, let windows = windowsRef as? [AXUIElement] else {
+            debug("  -> AXUIElementCopyAttributeValue failed: \(result.rawValue)")
             return false
         }
+
+        debug("  -> found \(windows.count) windows")
 
         for window in windows {
             var titleRef: CFTypeRef?
             AXUIElementCopyAttributeValue(window, kAXTitleAttribute as CFString, &titleRef)
+            let title = titleRef as? String ?? "(no title)"
+            debug("  -> window title: \(title)")
 
-            if let title = titleRef as? String, title.contains(titlePart) {
-                AXUIElementPerformAction(window, kAXRaiseAction as CFString)
-                app.activate(options: [.activateIgnoringOtherApps])
+            if title.contains(titlePart) {
+                debug("  -> MATCH! attempting to focus...")
+
+                // ウィンドウを現在のSpaceに移動（通常のSpaceの場合）
+                let moved = moveWindowToCurrentSpace(window)
+                debug("  -> moveWindowToCurrentSpace: \(moved)")
+
+                // ウィンドウを前面に
+                let raised = AXUIElementPerformAction(window, kAXRaiseAction as CFString)
+                debug("  -> AXRaiseAction: \(raised.rawValue)")
+
+                // アプリをアクティブ化（全画面Spaceの場合はこれでSpace移動される）
+                let activated = app.activate(options: [.activateAllWindows, .activateIgnoringOtherApps])
+                debug("  -> activate: \(activated)")
+
                 return true
             }
         }
 
+        debug("  -> no matching window found")
         return false
     }
 
