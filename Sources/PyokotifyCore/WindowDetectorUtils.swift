@@ -294,6 +294,23 @@ public enum WindowDetectorUtils {
         return String(output[range])
     }
 
+    // MARK: - バイナリ検索
+
+    /// PATH環境変数とフォールバックパスからコマンドバイナリを検索
+    public static func findBinary(_ name: String, fallbacks: [String] = []) -> String? {
+        // PATH から検索
+        if let pathEnv = ProcessInfo.processInfo.environment["PATH"] {
+            for dir in pathEnv.split(separator: ":") {
+                let candidate = "\(dir)/\(name)"
+                if FileManager.default.isExecutableFile(atPath: candidate) {
+                    return candidate
+                }
+            }
+        }
+        // フォールバック
+        return fallbacks.first { FileManager.default.isExecutableFile(atPath: $0) }
+    }
+
     // MARK: - コマンド実行（PWD取得用に残す）
 
     /// コマンドを実行して出力を取得

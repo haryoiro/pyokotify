@@ -204,12 +204,29 @@ struct BundleIdMappingTests {
         #expect(config.getCallerBundleId() == "com.apple.Terminal")
     }
 
+    @Test("cmux の Bundle ID を正しく取得")
+    func cmuxMapping() {
+        var config = PyokotifyConfig(imagePath: "test.png")
+        config.callerApp = "cmux"
+
+        #expect(config.getCallerBundleId() == "com.cmuxterm.app")
+    }
+
     @Test("未知のターミナルは nil を返す")
     func unknownTerminal() {
         var config = PyokotifyConfig(imagePath: "test.png")
         config.callerApp = "unknown_terminal"
 
         #expect(config.getCallerBundleId() == nil)
+    }
+
+    @Test("未知アプリのバンドルIDがそのまま返る")
+    func unknownBundleIdPassthrough() {
+        var config = PyokotifyConfig(imagePath: "test.png")
+        config.callerApp = "com.example.unknown-terminal"
+
+        // バンドルID形式（ドット含む）ならそのまま返す
+        #expect(config.getCallerBundleId() == "com.example.unknown-terminal")
     }
 
     @Test("callerApp が nil の場合は nil を返す")

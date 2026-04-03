@@ -22,6 +22,8 @@ public struct PyokotifyConfig {
     public var hooksMode: Bool
     public var soundPath: String?
     public var autoDetectCaller: Bool
+    /// テスト用: 表示後に自動クリックをシミュレート
+    public var autoClick: Bool
 
     public init(
         imagePath: String,
@@ -40,7 +42,8 @@ public struct PyokotifyConfig {
         cwd: String? = nil,
         hooksMode: Bool = false,
         soundPath: String? = nil,
-        autoDetectCaller: Bool = true
+        autoDetectCaller: Bool = true,
+        autoClick: Bool = false
     ) {
         self.imagePath = imagePath
         self.displayDuration = displayDuration
@@ -59,6 +62,7 @@ public struct PyokotifyConfig {
         self.hooksMode = hooksMode
         self.soundPath = soundPath
         self.autoDetectCaller = autoDetectCaller
+        self.autoClick = autoClick
     }
 }
 
@@ -70,7 +74,15 @@ extension PyokotifyConfig {
 
     public func getCallerBundleId() -> String? {
         guard let caller = callerApp else { return nil }
-        return Self.termProgramToBundleId[caller]
+        // まず既知のTERM_PROGRAM名として逆引き（--caller オプション / 既知アプリ）
+        if let bundleId = Self.termProgramToBundleId[caller] {
+            return bundleId
+        }
+        // callerがバンドルIDそのもの（汎用プロセスツリー検出の結果）
+        if caller.contains(".") {
+            return caller
+        }
+        return nil
     }
 }
 
@@ -155,6 +167,8 @@ extension PyokotifyConfig {
                 }
             case "--no-auto-detect":
                 config.autoDetectCaller = false
+            case "--auto-click":
+                config.autoClick = true
             default:
                 break
             }
