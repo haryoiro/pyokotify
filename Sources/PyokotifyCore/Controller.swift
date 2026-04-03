@@ -40,7 +40,19 @@ public class PyokotifyController {
         window?.contentView = view
         window?.makeKeyAndOrderFront(nil)
 
-        animateIn { self.scheduleHide() }
+        animateIn {
+            self.scheduleHide()
+            if self.config.autoClick {
+                self.scheduleAutoClick()
+            }
+        }
+    }
+
+    /// テスト用: 表示後に自動でクリックをシミュレート
+    private func scheduleAutoClick() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            self?.handleClick()
+        }
     }
 }
 
@@ -240,90 +252,40 @@ extension PyokotifyController {
     private func handleClick() {
         hideTimer?.cancel()
 
-        // VSCode専用の高精度ウィンドウ検出を試行
-        if isVSCodeEnvironment() && VSCodeWindowDetector.focusCurrentWindow(cwd: config.cwd) {
-            // 成功
-        } else if isIntelliJEnvironment() && IntelliJWindowDetector.focusCurrentWindow(cwd: config.cwd) {
-            // 成功
-        } else if !focusWindowByCwd() {
-            // フォールバック: アプリにフォーカス
-            if let app = getCallerApp() {
-                app.activate(options: [.activateIgnoringOtherApps])
+        let strategy = FocusStrategyResolver.determine(
+            callerApp: config.callerApp,
+            cwd: config.cwd,
+            env: ProcessInfo.processInfo.environment
+        )
+
+        switch strategy {
+        case .tmux(let cwd):
+            if !TmuxWindowDetector.focusCurrentWindow(cwd: cwd) {
+                activateFallbackApp()
             }
+        case .vscode(let cwd):
+            if !VSCodeWindowDetector.focusCurrentWindow(cwd: cwd) {
+                activateFallbackApp()
+            }
+        case .intellij(let cwd):
+            if !IntelliJWindowDetector.focusCurrentWindow(cwd: cwd) {
+                activateFallbackApp()
+            }
+        case .generic:
+            if !focusWindowByCwd() {
+                activateFallbackApp()
+            }
+        case .fallback:
+            activateFallbackApp()
         }
 
         animateOut { NSApp.terminate(nil) }
     }
 
-    /// VSCode環境かどうかを判定
-    private func isVSCodeEnvironment() -> Bool {
-        // プロセスツリーから検出したアプリを最優先
-        if let caller = config.callerApp {
-            let lowerCaller = caller.lowercased()
-            if lowerCaller.contains("vscode") {
-                return true
-            }
-            // 他のターミナル（ghostty, iterm等）が検出されていたらVSCodeではない
-            return false
+    private func activateFallbackApp() {
+        if let app = getCallerApp() {
+            app.activate(options: [.activateIgnoringOtherApps])
         }
-
-        // TERM_PROGRAM で判定
-        if let termProgram = ProcessInfo.processInfo.environment["TERM_PROGRAM"] {
-            let lowerTermProgram = termProgram.lowercased()
-            if lowerTermProgram.contains("vscode") {
-                return true
-            }
-            // 他のターミナルが明示されていればVSCodeではない
-            return false
-        }
-
-        // callerAppもTERM_PROGRAMも未設定の場合のみ、VSCODE_GIT_IPC_HANDLEを参照
-        if ProcessInfo.processInfo.environment["VSCODE_GIT_IPC_HANDLE"] != nil {
-            return true
-        }
-        return false
-    }
-
-    /// IntelliJ/JetBrains IDE環境かどうかを判定
-    private func isIntelliJEnvironment() -> Bool {
-        // JetBrains IDE名のリスト
-        let jetBrainsNames = [
-            "idea", "intellij", "appcode", "clion", "webstorm",
-            "pycharm", "phpstorm", "goland", "rubymine", "rider",
-            "datagrip", "fleet",
-        ]
-
-        // プロセスツリーから検出したアプリを最優先
-        if let caller = config.callerApp?.lowercased() {
-            for name in jetBrainsNames {
-                if caller.contains(name) {
-                    return true
-                }
-            }
-            // 他のターミナル（ghostty, iterm等）が検出されていたらJetBrainsではない
-            return false
-        }
-
-        // __CFBundleIdentifier が JetBrains IDE を示している
-        if let bundleId = ProcessInfo.processInfo.environment["__CFBundleIdentifier"],
-            bundleId.contains("jetbrains")
-        {
-            return true
-        }
-
-        // TERMINAL_EMULATOR が JetBrains-JediTerm を示している
-        if let termEmulator = ProcessInfo.processInfo.environment["TERMINAL_EMULATOR"],
-            termEmulator.contains("JetBrains")
-        {
-            return true
-        }
-
-        // __INTELLIJ_COMMAND_HISTFILE__ が設定されている（IntelliJターミナル固有）
-        if ProcessInfo.processInfo.environment["__INTELLIJ_COMMAND_HISTFILE__"] != nil {
-            return true
-        }
-
-        return false
     }
 
     private func getCallerApp() -> NSRunningApplication? {
