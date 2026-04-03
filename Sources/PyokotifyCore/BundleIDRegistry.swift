@@ -58,6 +58,8 @@ public enum BundleIDRegistry {
         "net.kovidgoyal.kitty": "kitty",
         "org.tabby": "Tabby",
         "com.mitchellh.ghostty": "ghostty",
+        "com.cmuxterm.app": "cmux",
+        "com.cmuxterm.app.nightly": "cmux",
     ]
 
     /// 全ターミナル関連アプリのバンドルID → TERM_PROGRAM名 マッピング（JetBrains含む）
@@ -85,7 +87,7 @@ public enum BundleIDRegistry {
         "Tabby": "org.tabby",
         "ghostty": "com.mitchellh.ghostty",
         "Ghostty": "com.mitchellh.ghostty",
-        "tmux": "com.apple.Terminal",
+        "cmux": "com.cmuxterm.app",
         // JetBrains
         "idea": "com.jetbrains.intellij",
         "appcode": "com.jetbrains.AppCode",

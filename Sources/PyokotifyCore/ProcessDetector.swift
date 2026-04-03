@@ -2,16 +2,17 @@ import AppKit
 import Foundation
 
 /// 親プロセスからターミナルアプリを検出
+///
+/// プロセスツリーを遡り、最初に見つかったGUIアプリ（NSRunningApplication）を返す。
+/// 既知のアプリはTERM_PROGRAM名で返し、未知のアプリはバンドルIDをそのまま返す。
+/// これにより、レジストリに未登録のターミナルアプリも自動的に検出できる。
 public enum ProcessDetector {
 
-    /// ターミナルアプリのバンドルID一覧
-    private static var terminalBundleIds: Set<String> { BundleIDRegistry.allTerminalBundleIds }
-
-    /// バンドルID -> TERM_PROGRAM名のマッピング
+    /// バンドルID -> TERM_PROGRAM名のマッピング（既知アプリの名前解決用）
     private static var bundleIdToTermProgram: [String: String] { BundleIDRegistry.allTerminalApps }
 
     /// プロセスツリーを遡ってターミナルアプリを検出
-    /// - Returns: 検出したTERM_PROGRAM名（VSCodeなら"vscode"）
+    /// - Returns: 既知アプリのTERM_PROGRAM名、または未知アプリのバンドルID
     public static func detectTerminalApp() -> String? {
         var currentPid = getpid()
         var visitedPids: Set<pid_t> = []
@@ -24,18 +25,37 @@ public enum ProcessDetector {
             let parentPid = WindowDetectorUtils.getParentPid(of: currentPid)
             guard parentPid > 1 else { break }  // init(1)に到達したら終了
 
-            // 親プロセスのバンドルIDを取得
-            if let bundleId = getBundleId(for: parentPid),
-                terminalBundleIds.contains(bundleId)
-            {
-                return bundleIdToTermProgram[bundleId]
+            // 親プロセスが任意のGUIアプリかチェック
+            if let bundleId = getBundleId(for: parentPid) {
+                // 既知アプリならTERM_PROGRAM名を返す（VSCode/IntelliJ等の特殊処理用）
+                if let name = bundleIdToTermProgram[bundleId] {
+                    return name
+                }
+                // 未知アプリならバンドルIDをそのまま返す
+                return bundleId
             }
 
             currentPid = parentPid
         }
 
         // TERM_PROGRAM環境変数をフォールバックとして使用
-        return ProcessInfo.processInfo.environment["TERM_PROGRAM"]
+        let termProgram = ProcessInfo.processInfo.environment["TERM_PROGRAM"]
+
+        // tmux環境の場合、クライアントPIDから実際のターミナルアプリを検出
+        if termProgram == "tmux" {
+            if let realTerminal = TmuxWindowDetector.detectRealTerminalApp() {
+                return realTerminal
+            }
+        }
+
+        // cmuxはTERM_PROGRAM=ghosttyを設定するが、CMUX_WORKSPACE_IDで区別可能
+        if termProgram == "ghostty"
+            && ProcessInfo.processInfo.environment["CMUX_WORKSPACE_ID"] != nil
+        {
+            return "cmux"
+        }
+
+        return termProgram
     }
 
     /// 指定PIDのバンドルIDを取得
