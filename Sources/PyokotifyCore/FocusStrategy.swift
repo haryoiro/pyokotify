@@ -5,6 +5,8 @@ import Foundation
 /// GUI操作から切り離された純粋なデータ型。
 /// 「どのDetectorを使うか」の判定ロジックだけをテスト可能にする。
 public enum FocusStrategy: Equatable {
+    /// cmux環境: cmuxアプリにフォーカス + タブ（Surface）復元
+    case cmux(cwd: String?)
     /// tmux環境: 実ターミナルにフォーカス + ペイン復元
     case tmux(cwd: String?)
     /// VSCode: 専用ウィンドウ検出
@@ -34,28 +36,33 @@ public enum FocusStrategyResolver {
         cwd: String?,
         env: [String: String]
     ) -> FocusStrategy {
-        // 1. tmux
+        // 1. cmux（タブ復元が必要なため、tmuxより先に判定）
+        if env["CMUX_WORKSPACE_ID"] != nil {
+            return .cmux(cwd: cwd)
+        }
+
+        // 2. tmux
         if env["TMUX"] != nil {
             return .tmux(cwd: cwd)
         }
 
-        // 2. VSCode
+        // 3. VSCode
         if isVSCodeEnvironment(callerApp: callerApp, env: env) {
             return .vscode(cwd: cwd)
         }
 
-        // 3. IntelliJ/JetBrains
+        // 4. IntelliJ/JetBrains
         if isIntelliJEnvironment(callerApp: callerApp, env: env) {
             return .intellij(cwd: cwd)
         }
 
-        // 4. 汎用（callerAppからバンドルIDを解決）
+        // 5. 汎用（callerAppからバンドルIDを解決）
         let bundleId = resolveBundleId(callerApp)
         if bundleId != nil || cwd != nil {
             return .generic(bundleId: bundleId, cwd: cwd)
         }
 
-        // 5. フォールバック
+        // 6. フォールバック
         return .fallback
     }
 

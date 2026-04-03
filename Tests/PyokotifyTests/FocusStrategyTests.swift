@@ -6,6 +6,31 @@ import Testing
 @Suite("FocusStrategy Detection Tests")
 struct FocusStrategyTests {
 
+    // MARK: - cmux
+
+    @Test("CMUX_WORKSPACE_IDがあればcmux戦略")
+    func cmuxDetected() {
+        let result = FocusStrategyResolver.determine(
+            callerApp: "cmux",
+            cwd: "/path",
+            env: ["CMUX_WORKSPACE_ID": "ws-123"]
+        )
+        #expect(result == .cmux(cwd: "/path"))
+    }
+
+    @Test("cmux環境ではtmuxより優先される")
+    func cmuxOverridesTmux() {
+        let result = FocusStrategyResolver.determine(
+            callerApp: "cmux",
+            cwd: "/path",
+            env: [
+                "CMUX_WORKSPACE_ID": "ws-123",
+                "TMUX": "/tmp/tmux-501/default,1,0",
+            ]
+        )
+        #expect(result == .cmux(cwd: "/path"))
+    }
+
     // MARK: - tmux
 
     @Test("TMUX環境変数があればtmux戦略")
@@ -248,21 +273,32 @@ struct FocusStrategyTests {
 
     // MARK: - 優先順位
 
-    @Test("tmux > VSCode > IntelliJ > generic の優先順位")
+    @Test("cmux > tmux > VSCode > IntelliJ > generic の優先順位")
     func priorityOrder() {
-        // tmuxが最優先
+        // cmuxが最優先
+        let cmuxResult = FocusStrategyResolver.determine(
+            callerApp: "cmux",
+            cwd: "/path",
+            env: [
+                "CMUX_WORKSPACE_ID": "ws-1",
+                "TMUX": "/tmp/tmux-501/default,1,0",
+                "VSCODE_GIT_IPC_HANDLE": "/tmp/sock",
+            ]
+        )
+        #expect(cmuxResult == .cmux(cwd: "/path"))
+
+        // cmuxなし → tmux
         let tmuxResult = FocusStrategyResolver.determine(
             callerApp: "vscode",
             cwd: "/path",
             env: [
                 "TMUX": "/tmp/tmux-501/default,1,0",
                 "VSCODE_GIT_IPC_HANDLE": "/tmp/sock",
-                "__CFBundleIdentifier": "com.jetbrains.intellij",
             ]
         )
         #expect(tmuxResult == .tmux(cwd: "/path"))
 
-        // tmuxなし → VSCode
+        // tmuxもなし → VSCode
         let vscodeResult = FocusStrategyResolver.determine(
             callerApp: "vscode",
             cwd: "/path",

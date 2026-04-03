@@ -259,6 +259,10 @@ extension PyokotifyController {
         )
 
         switch strategy {
+        case .cmux(let cwd):
+            if !CmuxWindowDetector.focusCurrentWindow(cwd: cwd) {
+                activateFallbackApp()
+            }
         case .tmux(let cwd):
             if !TmuxWindowDetector.focusCurrentWindow(cwd: cwd) {
                 activateFallbackApp()
