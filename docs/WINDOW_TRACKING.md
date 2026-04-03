@@ -1,25 +1,46 @@
-# IDE ウィンドウ追跡の仕様
+# ウィンドウ追跡の仕様
 
-pyokotifyは、通知クリック時に呼び出し元のIDEウィンドウにフォーカスを戻す機能を持っています。
+pyokotifyは、通知クリック時に呼び出し元のウィンドウにフォーカスを戻す機能を持っています。
 複数のウィンドウが開いている場合でも、正しいウィンドウを特定してフォーカスできます。
 
 ---
 
-## 環境判定
+## アプリ検出の仕組み
 
-### 判定の優先順位
+### 汎用プロセスツリー検出
 
-VSCode/JetBrains環境の判定は以下の優先順位で行われます:
+`ProcessDetector` はプロセスツリーを遡り、**最初に見つかったGUIアプリ（`NSRunningApplication`）** を呼び出し元として返します。
+既知のアプリリストへの事前登録は不要で、任意のターミナルアプリが自動的に検出されます。
 
-1. **`callerApp`（プロセスツリーから検出）を最優先**
-   - 親プロセスを辿って検出されたターミナルアプリ名で判定
-   - Ghostty, iTerm等の他ターミナルが検出された場合は、VSCode/JetBrains環境ではないと判定
+```
+pyokotify → ... → claude → zsh → [最初のGUIアプリ = ターミナル]
+```
 
-2. **環境変数による判定**
-   - VSCode: `TERM_PROGRAM`、`VSCODE_GIT_IPC_HANDLE`
-   - JetBrains: `__CFBundleIdentifier`、`TERMINAL_EMULATOR`、`__INTELLIJ_COMMAND_HISTFILE__`
+- **既知アプリ** → TERM_PROGRAM名を返す（VSCode/IntelliJ等の特殊処理の判定に使用）
+- **未知アプリ** → バンドルIDをそのまま返す（汎用フォーカス処理で使用）
 
-この優先順位により、VSCode/JetBrainsのターミナルから別のターミナル（Ghostty等）を起動した場合でも、正しいターミナルにフォーカスが戻ります。
+### フォーカス復帰の優先順位（handleClick）
+
+通知クリック時、以下の順序で処理されます:
+
+1. **tmux** — `TMUX`環境変数で判定 → 実ターミナルにフォーカス＋ペイン復元
+2. **VSCode** — プロセスツリー/環境変数で判定 → 専用ウィンドウ検出
+3. **IntelliJ/JetBrains** — プロセスツリー/環境変数で判定 → 専用ウィンドウ検出
+4. **汎用** — cwdベースのウィンドウタイトルマッチング → アプリ全体フォーカス
+
+### 環境変数による補助判定
+
+プロセスツリー検出が失敗した場合のフォールバック:
+
+| 環境変数 | 用途 |
+|---|---|
+| `TERM_PROGRAM` | ターミナルアプリの識別（tmux/ghostty等） |
+| `TMUX` | tmux環境の判定 |
+| `CMUX_WORKSPACE_ID` | cmux（`TERM_PROGRAM=ghostty`だがGhosttyと区別） |
+| `VSCODE_GIT_IPC_HANDLE` | VSCode環境の判定 |
+| `__CFBundleIdentifier` | JetBrains IDE環境の判定 |
+| `TERMINAL_EMULATOR` | JetBrains IDE環境の判定 |
+| `__INTELLIJ_COMMAND_HISTFILE__` | JetBrains IDE環境の判定 |
 
 ---
 
@@ -247,6 +268,119 @@ __CFBundleIdentifier (例: com.jetbrains.intellij)
 ### 制限事項
 
 - ウィンドウタイトルにプロジェクト名が含まれている必要がある
+
+---
+
+## tmux
+
+### 概要
+
+tmux内からpyokotifyが起動された場合、tmuxクライアントのプロセスツリーを辿って
+実際のGUIターミナルアプリを特定し、通知クリック時にペインまで復元する。
+
+### 検出フロー
+
+```
+TMUX環境変数 (/tmp/tmux-501/default,12345,0)
+    ↓ ソケットパスを抽出
+tmux list-clients -F '#{client_pid}'
+    ↓ クライアントPIDを取得
+クライアントPIDの親プロセスツリーを探索
+    ↓ NSRunningApplication とバンドルIDをマッチング
+実際のターミナルアプリ (iTerm2, Ghostty, Terminal.app 等)
+```
+
+### 環境判定
+
+以下の条件で tmux 環境と判定:
+
+- `TMUX` 環境変数が設定されている
+
+tmux判定はVSCode/IntelliJ判定より**先に**行われる。
+VSCodeのターミナル内でtmuxを使うケースは稀であり、tmux固有のペイン復元が優先されるため。
+
+### ペイン復元
+
+通知クリック時、以下のコマンドでペインを復元:
+
+```bash
+# TMUX_PANE からペインが所属するウィンドウを特定
+tmux display-message -t $TMUX_PANE -p '#{session_name}:#{window_index}'
+
+# ウィンドウ切替 + ペイン選択
+tmux select-window -t <session>:<window>
+tmux select-pane -t $TMUX_PANE
+```
+
+### 親ターミナル検出（ProcessDetector連携）
+
+`ProcessDetector.detectTerminalApp()` で `TERM_PROGRAM=tmux` を検出した場合、
+`TmuxWindowDetector.detectRealTerminalApp()` に委譲して実際のターミナルを特定する。
+これにより `config.callerApp` には tmux ではなく実際のターミナル名が設定される。
+
+### tmuxバイナリの検索
+
+`PATH`環境変数を検索し、見つからない場合は以下のフォールバックパスを使用:
+
+1. `PATH`環境変数内のディレクトリ（nix-darwin等の非標準パスに対応）
+2. `/opt/homebrew/bin/tmux` (Apple Silicon Homebrew)
+3. `/usr/local/bin/tmux` (Intel Homebrew)
+4. `/usr/bin/tmux` (システム)
+
+### 制限事項
+
+- tmuxバイナリが上記パスにない場合、ペイン復元は動作しない
+- デタッチ中のセッションでは元のペインに戻れない場合がある
+- tmux内でさらにtmuxをネストしている場合は未対応
+
+---
+
+## cmux
+
+### 概要
+
+cmux（`com.cmuxterm.app`）はlibghosttyベースのターミナルアプリ。
+`TERM_PROGRAM=ghostty` を設定するため、Ghosttyとの区別に固有の環境変数を使用する。
+
+### 検出方法
+
+1. **プロセスツリー検出（優先）**: バンドルID `com.cmuxterm.app` / `com.cmuxterm.app.nightly` で検出
+2. **環境変数フォールバック**: `TERM_PROGRAM=ghostty` かつ `CMUX_WORKSPACE_ID` が設定されている場合にcmuxと判定
+
+### 対応バンドルID
+
+- `com.cmuxterm.app`（Production）
+- `com.cmuxterm.app.nightly`（Nightly）
+
+---
+
+## 汎用ターミナル
+
+### 概要
+
+上記の特殊処理対象（tmux、VSCode、IntelliJ）以外のターミナルアプリは、
+**汎用プロセスツリー検出 + cwdベースのウィンドウマッチング**で自動対応します。
+
+BundleIDRegistryへの事前登録は不要です。
+
+### 検出フロー
+
+```
+プロセスツリーを遡り、最初のNSRunningApplicationを検出
+    ↓ バンドルIDを取得
+バンドルIDが既知 → TERM_PROGRAM名で返す
+バンドルIDが未知 → バンドルIDをそのまま返す
+    ↓
+getCallerBundleId()でバンドルIDを解決
+    ↓
+Accessibility APIでウィンドウタイトルマッチ → フォーカス復帰
+```
+
+### フォーカス復帰
+
+1. cwdのフルパスでウィンドウタイトルをマッチ（Ghostty等）
+2. cwdのフォルダ名でウィンドウタイトルをマッチ
+3. フォールバック: アプリ全体にフォーカス
 
 ---
 
