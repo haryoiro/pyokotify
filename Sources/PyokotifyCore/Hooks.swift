@@ -311,7 +311,9 @@ public struct ClaudeHooksInput: Codable {
 
 // MARK: - AnyCodable（任意JSON対応）
 
-/// 任意のJSON値を扱うためのラッパー
+/// hooks JSONには未知のフィールドが含まれる可能性があるため、
+/// 型を事前に決められない値を扱うラッパー。
+/// Claude Code / Copilot のJSON仕様変更に影響されずにデコードできる。
 public struct AnyCodable: Codable {
     public let value: Any
 

@@ -12,13 +12,11 @@ public struct GitInfo {
         self.repositoryName = GitInfo.getRepositoryName(cwd: cwd)
     }
 
-    /// カレントブランチ名を取得
     private static func getBranch(cwd: String) -> String? {
         let result = runGitCommand(["rev-parse", "--abbrev-ref", "HEAD"], cwd: cwd)
         return result?.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    /// リポジトリ名を取得
     private static func getRepositoryName(cwd: String) -> String? {
         // まずgit rev-parseでリポジトリルートを取得
         if let root = runGitCommand(["rev-parse", "--show-toplevel"], cwd: cwd)?
@@ -30,7 +28,6 @@ public struct GitInfo {
         return (cwd as NSString).lastPathComponent
     }
 
-    /// Gitコマンドを実行（タイムアウト付き）
     private static func runGitCommand(_ args: [String], cwd: String) -> String? {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/git")

@@ -7,9 +7,6 @@ public class SoundPlayer {
 
     public init() {}
 
-    /// 指定された音声ファイルを再生
-    /// - Parameter path: 音声ファイルのパス
-    /// - Returns: 再生成功時はtrue
     @discardableResult
     public func play(path: String) -> Bool {
         let expandedPath = (path as NSString).expandingTildeInPath
@@ -33,8 +30,6 @@ public class SoundPlayer {
         }
     }
 
-    /// システムサウンド名で再生
-    /// - Parameter name: システムサウンド名（例: "Glass", "Ping", "Pop"）
     @discardableResult
     public func playSystemSound(named name: String) -> Bool {
         if let sound = NSSound(named: NSSound.Name(name)) {

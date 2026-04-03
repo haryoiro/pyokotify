@@ -16,9 +16,9 @@ public enum PeekDirection: String, CaseIterable, Sendable {
     /// 画像の回転角度（度）- 反時計回りが正
     public var rotationDegrees: CGFloat {
         switch self {
-        case .bottom: return 0  // そのまま（頭が上）
-        case .left: return -90  // 頭が右（左から出てくる）- 時計回り90度
-        case .right: return 90  // 頭が左（右から出てくる）- 反時計回り90度
+        case .bottom: return 0
+        case .left: return -90
+        case .right: return 90
         }
     }
 }

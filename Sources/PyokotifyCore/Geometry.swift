@@ -4,11 +4,9 @@ import Foundation
 
 /// 幾何計算ユーティリティ
 public enum Geometry {
-    /// 矩形の縁上で、中心から指定角度方向の点を計算
-    /// - Parameters:
-    ///   - rect: 対象の矩形
-    ///   - angle: 中心からの角度（ラジアン）
-    /// - Returns: 矩形の縁上の点
+
+    // MARK: - 矩形の縁上の点
+
     public static func pointOnRectEdge(rect: CGRect, angle: CGFloat) -> CGPoint {
         let center = CGPoint(x: rect.midX, y: rect.midY)
         let cosA = cos(angle)
@@ -35,11 +33,9 @@ public enum Geometry {
         )
     }
 
-    /// scaleProportionallyUpOrDown の挙動を再現して画像の描画領域を計算
-    /// - Parameters:
-    ///   - imageSize: 元画像のサイズ
-    ///   - viewSize: ビューのサイズ
-    /// - Returns: 画像が描画される領域
+    // MARK: - 画像描画領域
+
+    /// NSImageView の scaleProportionallyUpOrDown と同じ計算
     public static func calculateImageRect(imageSize: CGSize, viewSize: CGSize) -> CGRect {
         guard imageSize.width > 0, imageSize.height > 0, viewSize.width > 0, viewSize.height > 0 else {
             return .zero
@@ -64,14 +60,8 @@ public enum Geometry {
         return CGRect(x: x, y: y, width: drawSize.width, height: drawSize.height)
     }
 
-    /// しっぽの三角形の頂点を計算
-    /// - Parameters:
-    ///   - bubbleRect: 吹き出しの矩形
-    ///   - targetPoint: しっぽが向かうターゲット座標
-    ///   - tailLength: しっぽの長さ
-    ///   - tailWidth: しっぽの根元の幅
-    ///   - insetAmount: 根元の内側オフセット量
-    /// - Returns: (先端, 根元左, 根元右) のタプル、または nil
+    // MARK: - 吹き出しのしっぽ
+
     public static func calculateTailPoints(
         bubbleRect: CGRect,
         targetPoint: CGPoint,

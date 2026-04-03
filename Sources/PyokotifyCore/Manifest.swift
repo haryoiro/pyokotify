@@ -16,7 +16,6 @@ public struct Manifest: Codable {
         case files
     }
 
-    /// manifest.jsonを読み込む
     public static func load() -> Manifest? {
         let path = (defaultPath as NSString).expandingTildeInPath
         guard let data = FileManager.default.contents(atPath: path) else {
@@ -25,17 +24,14 @@ public struct Manifest: Codable {
         return try? JSONDecoder().decode(Manifest.self, from: data)
     }
 
-    /// 削除対象のパスを取得（チルダ展開済み）
     public func expandedFiles() -> [String] {
         files.map { ($0 as NSString).expandingTildeInPath }
     }
 
-    /// メタデータディレクトリのパスを取得（チルダ展開済み）
     public static func expandedDataDir() -> String {
         (defaultDataDir as NSString).expandingTildeInPath
     }
 
-    /// デフォルトのバイナリパスを取得（チルダ展開済み）
     public static func expandedBinaryPath() -> String {
         (defaultBinaryPath as NSString).expandingTildeInPath
     }

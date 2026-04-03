@@ -4,6 +4,9 @@ import Darwin
 import Foundation
 
 // MARK: - CGS プライベートAPI宣言
+// macOSの非公開API。ウィンドウを別のSpace（仮想デスクトップ）に移動するために使用。
+// 公開APIではSpace間のウィンドウ移動ができないため、これに頼っている。
+// 将来のmacOSで動作しなくなる可能性がある。
 
 private typealias CGSConnectionID = UInt32
 private typealias CGSSpaceID = UInt64

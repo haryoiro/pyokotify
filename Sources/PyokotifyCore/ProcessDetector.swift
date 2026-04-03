@@ -25,14 +25,9 @@ public enum ProcessDetector {
             let parentPid = WindowDetectorUtils.getParentPid(of: currentPid)
             guard parentPid > 1 else { break }  // init(1)に到達したら終了
 
-            // 親プロセスが任意のGUIアプリかチェック
             if let bundleId = getBundleId(for: parentPid) {
-                // 既知アプリならTERM_PROGRAM名を返す（VSCode/IntelliJ等の特殊処理用）
-                if let name = bundleIdToTermProgram[bundleId] {
-                    return name
-                }
-                // 未知アプリならバンドルIDをそのまま返す
-                return bundleId
+                // 既知アプリはTERM_PROGRAM名で返し、FocusStrategyResolverが特殊処理を判定する
+                return bundleIdToTermProgram[bundleId] ?? bundleId
             }
 
             currentPid = parentPid
