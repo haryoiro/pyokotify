@@ -95,7 +95,7 @@ tmux/zellij経由でも同様に確認する。
 - スペース入りパス (`/tmp/my project`) で実行
 - 存在しないcwd (`--cwd /nonexistent/path`) でクラッシュしないこと
 - cwdなし（`--cwd` 省略）でクラッシュしないこと
-- `PYOKOTIFY_DEBUG=1` でデバッグログがstderrに出力されること
+- `log stream --predicate 'subsystem == "com.haryoiro.pyokotify"' --level debug` でウィンドウ検出ログが出力されること
 
 ---
 

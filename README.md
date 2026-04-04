@@ -36,7 +36,14 @@ pyokotify uninstall -y
 **環境変数:**
 
 - `PYOKOTIFY_QUIET=1` - 出力を抑制
-- `PYOKOTIFY_DEBUG=1` - デバッグ出力を有効化
+
+**デバッグログ:**
+
+ログはmacOSの統合ログシステム（Console.app）に出力されます。
+
+```console
+log stream --predicate 'subsystem == "com.haryoiro.pyokotify"' --level debug
+```
 
 ### ソースからビルド
 
