@@ -22,7 +22,7 @@ public enum CmuxWindowDetector {
 
     /// cmuxアプリにフォーカスし、元のタブ（Surface）を復元
     public static func focusCurrentWindow(cwd: String?) -> Bool {
-        debug("focusCurrentWindow: cwd=\(cwd ?? "nil")")
+        Log.focus.debug("focusCurrentWindow(cmux): cwd=\(cwd ?? "nil", privacy: .public)")
 
         // cmuxアプリにフォーカス
         let bundleIds = ["com.cmuxterm.app", "com.cmuxterm.app.nightly"]
@@ -52,7 +52,7 @@ public enum CmuxWindowDetector {
         }
 
         guard focused else {
-            debug("  -> cmuxアプリが見つからない")
+            Log.focus.warning("focusCurrentWindow(cmux): cmuxアプリが見つかりません")
             return false
         }
 
@@ -66,17 +66,17 @@ public enum CmuxWindowDetector {
     /// CMUX_SURFACE_IDを使ってソケットAPI経由でタブにフォーカス
     private static func restoreSurface() {
         guard let surfaceId = ProcessInfo.processInfo.environment["CMUX_SURFACE_ID"] else {
-            debug("restoreSurface: CMUX_SURFACE_ID 未設定")
+            Log.focus.debug("restoreSurface: CMUX_SURFACE_ID 未設定")
             return
         }
 
         let socketPath = resolveSocketPath()
         guard !socketPath.isEmpty else {
-            debug("restoreSurface: ソケットパスが見つからない")
+            Log.focus.warning("restoreSurface: ソケットパスが見つかりません")
             return
         }
 
-        debug("restoreSurface: surfaceId=\(surfaceId), socket=\(socketPath)")
+        Log.focus.debug("restoreSurface: surfaceId=\(surfaceId, privacy: .public), socket=\(socketPath, privacy: .public)")
 
         // JSON-RPC で surface.focus を送信
         let request = "{\"id\":\"pyokotify\",\"method\":\"surface.focus\",\"params\":{\"surface_id\":\"\(surfaceId)\"}}\n"
@@ -103,7 +103,7 @@ public enum CmuxWindowDetector {
     private static func sendSocketMessage(socketPath: String, message: String) {
         let fd = socket(AF_UNIX, SOCK_STREAM, 0)
         guard fd >= 0 else {
-            debug("  -> ソケット作成失敗")
+            Log.focus.error("sendSocketMessage: ソケット作成失敗 (errno=\(errno))")
             return
         }
         defer { close(fd) }
@@ -126,7 +126,7 @@ public enum CmuxWindowDetector {
         }
 
         guard connectResult == 0 else {
-            debug("  -> ソケット接続失敗: \(socketPath)")
+            Log.focus.error("sendSocketMessage: ソケット接続失敗 \(socketPath, privacy: .public) (errno=\(errno))")
             return
         }
 
@@ -134,18 +134,7 @@ public enum CmuxWindowDetector {
             _ = send(fd, cstr, strlen(cstr), 0)
         }
 
-        debug("  -> surface.focus 送信完了")
+        Log.focus.debug("sendSocketMessage: surface.focus 送信完了")
     }
 
-    // MARK: - Private: デバッグ
-
-    private static var debugEnabled: Bool {
-        ProcessInfo.processInfo.environment["PYOKOTIFY_DEBUG"] != nil
-    }
-
-    private static func debug(_ message: String) {
-        if debugEnabled {
-            fputs("[pyokotify][cmux] \(message)\n", stderr)
-        }
-    }
 }

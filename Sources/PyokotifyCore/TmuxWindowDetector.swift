@@ -50,7 +50,7 @@ public enum TmuxWindowDetector {
         let clientPids = getClientPids()
         let bundleIdToTermProgram = BundleIDRegistry.allTerminalApps
 
-        debug("detectRealTerminalApp: found \(clientPids.count) tmux client(s)")
+        Log.focus.debug("detectRealTerminalApp: tmuxクライアント数 \(clientPids.count)")
 
         for clientPid in clientPids {
             var currentPid = clientPid
@@ -61,7 +61,7 @@ public enum TmuxWindowDetector {
                 visitedPids.insert(currentPid)
 
                 if let bundleId = getBundleId(for: currentPid) {
-                    debug("  -> found app: \(bundleId) (pid=\(currentPid))")
+                    Log.focus.debug("  -> アプリ検出: \(bundleId, privacy: .public) (pid=\(currentPid))")
                     // 既知アプリならTERM_PROGRAM名、未知ならバンドルIDをそのまま返す
                     return bundleIdToTermProgram[bundleId] ?? bundleId
                 }
@@ -72,7 +72,7 @@ public enum TmuxWindowDetector {
             }
         }
 
-        debug("  -> no terminal app found in client process trees")
+        Log.focus.debug("  -> クライアントのプロセスツリーにターミナルアプリが見つからない")
         return nil
     }
 
@@ -80,7 +80,7 @@ public enum TmuxWindowDetector {
     /// - Parameter cwd: 作業ディレクトリ
     /// - Returns: フォーカスに成功した場合はtrue
     public static func focusCurrentWindow(cwd: String?) -> Bool {
-        debug("focusCurrentWindow: cwd=\(cwd ?? "nil")")
+        Log.focus.debug("focusCurrentWindow(tmux): cwd=\(cwd ?? "nil", privacy: .public)")
 
         // 実際のターミナルアプリを特定
         if let detected = detectRealTerminalApp(),
@@ -104,7 +104,7 @@ public enum TmuxWindowDetector {
                     }
                 }
                 // マッチしなければアプリ全体にフォーカス
-                debug("  -> fallback: activating app \(bundleId)")
+                Log.focus.debug("  -> フォールバック: アプリ全体をアクティブ化 \(bundleId, privacy: .public)")
                 app.activate(options: [.activateIgnoringOtherApps])
                 restoreTmuxPane()
                 return true
@@ -123,7 +123,7 @@ public enum TmuxWindowDetector {
             }
         }
 
-        debug("  -> focusCurrentWindow failed")
+        Log.focus.debug("  -> focusCurrentWindow(tmux) 失敗")
         return false
     }
 
@@ -166,7 +166,7 @@ public enum TmuxWindowDetector {
     /// tmuxクライアントPIDを取得
     private static func getClientPids() -> [pid_t] {
         guard let tmux = tmuxPath else {
-            debug("getClientPids: tmux binary not found")
+            Log.focus.warning("getClientPids: tmuxバイナリが見つかりません")
             return []
         }
         let args = baseArgs() + ["list-clients", "-F", "#{client_pid}"]
@@ -182,11 +182,11 @@ public enum TmuxWindowDetector {
     /// tmuxペインを復元（ウィンドウ切替 + ペイン選択）
     private static func restoreTmuxPane() {
         guard let tmux = tmuxPath, let paneId = currentPaneId() else {
-            debug("restoreTmuxPane: skipped (tmux=\(tmuxPath ?? "nil"), pane=\(currentPaneId() ?? "nil"))")
+            Log.focus.debug("restoreTmuxPane: スキップ (tmux=\(tmuxPath ?? "nil", privacy: .public), pane=\(currentPaneId() ?? "nil", privacy: .public))")
             return
         }
 
-        debug("restoreTmuxPane: paneId=\(paneId)")
+        Log.focus.debug("restoreTmuxPane: paneId=\(paneId, privacy: .public)")
 
         let base = baseArgs()
 
@@ -196,13 +196,13 @@ public enum TmuxWindowDetector {
             .trimmingCharacters(in: .whitespacesAndNewlines),
             !target.isEmpty
         {
-            debug("  -> select-window -t \(target)")
+            Log.focus.debug("  -> select-window -t \(target, privacy: .public)")
             let selectWindowArgs = base + ["select-window", "-t", target]
             _ = WindowDetectorUtils.runCommand(tmux, arguments: selectWindowArgs)
         }
 
         // ペインを選択
-        debug("  -> select-pane -t \(paneId)")
+        Log.focus.debug("  -> select-pane -t \(paneId, privacy: .public)")
         let selectPaneArgs = base + ["select-pane", "-t", paneId]
         _ = WindowDetectorUtils.runCommand(tmux, arguments: selectPaneArgs)
     }
@@ -229,15 +229,4 @@ public enum TmuxWindowDetector {
         NSWorkspace.shared.runningApplications.first { $0.processIdentifier == pid }?.bundleIdentifier
     }
 
-    // MARK: - Private: デバッグ
-
-    private static var debugEnabled: Bool {
-        ProcessInfo.processInfo.environment["PYOKOTIFY_DEBUG"] != nil
-    }
-
-    private static func debug(_ message: String) {
-        if debugEnabled {
-            fputs("[pyokotify][tmux] \(message)\n", stderr)
-        }
-    }
 }
