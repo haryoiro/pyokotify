@@ -91,91 +91,82 @@ extension PyokotifyConfig {
 extension PyokotifyConfig {
     /// コマンドライン引数を解析して設定を生成
     public static func parse(arguments: [String]) -> Result<PyokotifyConfig, ConfigError> {
-        // ヘルプ表示
         if arguments.contains("-h") || arguments.contains("--help") {
             return .failure(.helpRequested)
         }
-
-        // 画像パス（必須）
         guard arguments.count >= 2 else {
             return .failure(.missingImagePath)
         }
 
         var config = PyokotifyConfig(imagePath: arguments[1])
-
-        // オプション解析
         var i = 2
         while i < arguments.count {
-            switch arguments[i] {
-            case "-d", "--duration":
-                if i + 1 < arguments.count, let duration = Double(arguments[i + 1]) {
-                    config.displayDuration = duration
-                    i += 1
-                }
-            case "-a", "--animation":
-                if i + 1 < arguments.count, let duration = Double(arguments[i + 1]) {
-                    config.animationDuration = duration
-                    i += 1
-                }
-            case "-p", "--peek":
-                if i + 1 < arguments.count, let height = Double(arguments[i + 1]) {
-                    config.peekHeight = CGFloat(height)
-                    i += 1
-                }
-            case "-m", "--margin":
-                if i + 1 < arguments.count, let margin = Double(arguments[i + 1]) {
-                    config.rightMargin = CGFloat(margin)
-                    i += 1
-                }
-            case "--no-click":
-                config.clickable = false
-            case "-r", "--random":
-                config.randomMode = true
-            case "--random-direction":
-                config.randomDirection = true
-            case "--min":
-                if i + 1 < arguments.count, let interval = Double(arguments[i + 1]) {
-                    config.randomMinInterval = interval
-                    i += 1
-                }
-            case "--max":
-                if i + 1 < arguments.count, let interval = Double(arguments[i + 1]) {
-                    config.randomMaxInterval = interval
-                    i += 1
-                }
-            case "-t", "--text":
-                if i + 1 < arguments.count {
-                    config.message = arguments[i + 1]
-                    i += 1
-                }
-            case "-c", "--caller":
-                if i + 1 < arguments.count {
-                    config.callerApp = arguments[i + 1]
-                    i += 1
-                }
-            case "--cwd":
-                if i + 1 < arguments.count {
-                    config.cwd = arguments[i + 1]
-                    i += 1
-                }
-            case "--hooks", "--claude-hooks":
-                config.hooksMode = true
-            case "-s", "--sound":
-                if i + 1 < arguments.count {
-                    config.soundPath = arguments[i + 1]
-                    i += 1
-                }
-            case "--no-auto-detect":
-                config.autoDetectCaller = false
-            case "--auto-click":
-                config.autoClick = true
-            default:
-                Log.app.warning("不明なオプション: \(arguments[i], privacy: .public)")
-            }
-            i += 1
+            let next = i + 1 < arguments.count ? arguments[i + 1] : nil
+            i += applyOption(arguments[i], nextArg: next, to: &config) ? 2 : 1
         }
-
         return .success(config)
+    }
+
+    /// 1つのオプションを解析してconfigに適用する
+    /// - Returns: 次の引数を値として消費した場合はtrue
+    private static func applyOption(_ flag: String, nextArg: String?, to config: inout PyokotifyConfig) -> Bool {
+        switch flag {
+        case "-d", "--duration":
+            guard let val = nextArg.flatMap(Double.init) else { return false }
+            config.displayDuration = val
+            return true
+        case "-a", "--animation":
+            guard let val = nextArg.flatMap(Double.init) else { return false }
+            config.animationDuration = val
+            return true
+        case "-p", "--peek":
+            guard let val = nextArg.flatMap(Double.init) else { return false }
+            config.peekHeight = CGFloat(val)
+            return true
+        case "-m", "--margin":
+            guard let val = nextArg.flatMap(Double.init) else { return false }
+            config.rightMargin = CGFloat(val)
+            return true
+        case "--min":
+            guard let val = nextArg.flatMap(Double.init) else { return false }
+            config.randomMinInterval = val
+            return true
+        case "--max":
+            guard let val = nextArg.flatMap(Double.init) else { return false }
+            config.randomMaxInterval = val
+            return true
+        case "-t", "--text":
+            guard let val = nextArg else { return false }
+            config.message = val
+            return true
+        case "-c", "--caller":
+            guard let val = nextArg else { return false }
+            config.callerApp = val
+            return true
+        case "--cwd":
+            guard let val = nextArg else { return false }
+            config.cwd = val
+            return true
+        case "-s", "--sound":
+            guard let val = nextArg else { return false }
+            config.soundPath = val
+            return true
+        case "--no-click":
+            config.clickable = false
+        case "-r", "--random":
+            config.randomMode = true
+        case "--random-direction":
+            config.randomDirection = true
+        case "--hooks", "--claude-hooks":
+            config.hooksMode = true
+        case "--no-auto-detect":
+            config.autoDetectCaller = false
+        case "--auto-click":
+            config.autoClick = true
+        default:
+            Log.app.warning("不明なオプション: \(flag, privacy: .public)")
+        }
+        return false
     }
 
     /// CommandLine.arguments から設定を生成（互換性のため）

@@ -497,82 +497,70 @@ public struct ClaudeHooksContext {
 
     /// イベントに応じたデフォルトメッセージを生成
     public func generateDefaultMessage(projectName: String?, branch: String?) -> String {
-        let projectInfo = formatProjectInfo(projectName: projectName, branch: branch)
-
+        let p = formatProjectInfo(projectName: projectName, branch: branch)
         switch event {
-        case .sessionStart:
-            switch source {
-            case .startup: return "\(projectInfo) Session started!"
-            case .resume: return "\(projectInfo) Session resumed!"
-            case .clear: return "\(projectInfo) Session cleared!"
-            case .compact: return "\(projectInfo) Context compacted!"
-            default: return "\(projectInfo) Session started!"
-            }
+        case .sessionStart:     return sessionStartMessage(p)
+        case .userPromptSubmit: return "\(p) Processing prompt..."
+        case .preToolUse:       return preToolUseMessage(p)
+        case .permissionRequest: return "\(p) Permission needed: \(toolName ?? "action")"
+        case .postToolUse:      return "\(p) Completed: \(toolName ?? "tool")"
+        case .postToolUseFailure: return postToolUseFailureMessage(p)
+        case .notification:     return notificationMessage(p)
+        case .subagentStart:    return "\(p) Agent started: \(agentType ?? "agent")"
+        case .subagentStop:     return "\(p) Agent finished: \(agentType ?? "agent")"
+        case .stop:             return stopHookActive ? "\(p) Continuing..." : "\(p) Done!"
+        case .preCompact:       return preCompactMessage(p)
+        case .sessionEnd:       return sessionEndMessage(p)
+        case .unknown:          return "\(p) Event"
+        }
+    }
 
-        case .userPromptSubmit:
-            return "\(projectInfo) Processing prompt..."
+    private func sessionStartMessage(_ p: String) -> String {
+        switch source {
+        case .startup:  return "\(p) Session started!"
+        case .resume:   return "\(p) Session resumed!"
+        case .clear:    return "\(p) Session cleared!"
+        case .compact:  return "\(p) Context compacted!"
+        default:        return "\(p) Session started!"
+        }
+    }
 
-        case .preToolUse:
-            if toolName == "AskUserQuestion" {
-                return "\(projectInfo) Question for you!"
-            }
-            return "\(projectInfo) Running: \(toolName ?? "tool")"
+    private func preToolUseMessage(_ p: String) -> String {
+        toolName == "AskUserQuestion"
+            ? "\(p) Question for you!"
+            : "\(p) Running: \(toolName ?? "tool")"
+    }
 
-        case .permissionRequest:
-            return "\(projectInfo) Permission needed: \(toolName ?? "action")"
+    private func postToolUseFailureMessage(_ p: String) -> String {
+        isInterrupt
+            ? "\(p) Interrupted: \(toolName ?? "tool")"
+            : "\(p) Failed: \(toolName ?? "tool")"
+    }
 
-        case .postToolUse:
-            return "\(projectInfo) Completed: \(toolName ?? "tool")"
+    private func notificationMessage(_ p: String) -> String {
+        switch notificationType {
+        case .permissionPrompt:  return "\(p) Permission required!"
+        case .idlePrompt:        return "\(p) Waiting for input!"
+        case .authSuccess:       return "\(p) Authentication successful!"
+        case .elicitationDialog: return "\(p) Dialog needed!"
+        default:                 return message ?? "\(p) Notification"
+        }
+    }
 
-        case .postToolUseFailure:
-            if isInterrupt {
-                return "\(projectInfo) Interrupted: \(toolName ?? "tool")"
-            }
-            return "\(projectInfo) Failed: \(toolName ?? "tool")"
+    private func preCompactMessage(_ p: String) -> String {
+        switch compactTrigger {
+        case .manual: return "\(p) Manual compaction..."
+        case .auto:   return "\(p) Auto compaction..."
+        default:      return "\(p) Compacting..."
+        }
+    }
 
-        case .notification:
-            switch notificationType {
-            case .permissionPrompt:
-                return "\(projectInfo) Permission required!"
-            case .idlePrompt:
-                return "\(projectInfo) Waiting for input!"
-            case .authSuccess:
-                return "\(projectInfo) Authentication successful!"
-            case .elicitationDialog:
-                return "\(projectInfo) Dialog needed!"
-            default:
-                return message ?? "\(projectInfo) Notification"
-            }
-
-        case .subagentStart:
-            return "\(projectInfo) Agent started: \(agentType ?? "agent")"
-
-        case .subagentStop:
-            return "\(projectInfo) Agent finished: \(agentType ?? "agent")"
-
-        case .stop:
-            if stopHookActive {
-                return "\(projectInfo) Continuing..."
-            }
-            return "\(projectInfo) Done!"
-
-        case .preCompact:
-            switch compactTrigger {
-            case .manual: return "\(projectInfo) Manual compaction..."
-            case .auto: return "\(projectInfo) Auto compaction..."
-            default: return "\(projectInfo) Compacting..."
-            }
-
-        case .sessionEnd:
-            switch endReason {
-            case .clear: return "\(projectInfo) Session cleared"
-            case .logout: return "\(projectInfo) Logged out"
-            case .promptInputExit: return "\(projectInfo) Session ended"
-            default: return "\(projectInfo) Session ended"
-            }
-
-        case .unknown:
-            return "\(projectInfo) Event"
+    private func sessionEndMessage(_ p: String) -> String {
+        switch endReason {
+        case .clear:            return "\(p) Session cleared"
+        case .logout:           return "\(p) Logged out"
+        case .promptInputExit:  return "\(p) Session ended"
+        default:                return "\(p) Session ended"
         }
     }
 
