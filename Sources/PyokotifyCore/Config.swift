@@ -107,6 +107,7 @@ extension PyokotifyConfig {
         return .success(config)
     }
 
+    // swiftlint:disable cyclomatic_complexity
     /// 1つのオプションを解析してconfigに適用する
     /// - Returns: 次の引数を値として消費した場合はtrue
     private static func applyOption(_ flag: String, nextArg: String?, to config: inout PyokotifyConfig) -> Bool {
@@ -168,6 +169,7 @@ extension PyokotifyConfig {
         }
         return false
     }
+    // swiftlint:enable cyclomatic_complexity
 
     /// CommandLine.arguments から設定を生成（互換性のため）
     public static func fromArguments() -> PyokotifyConfig? {
