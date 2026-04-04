@@ -38,16 +38,14 @@ public struct GitInfo {
         process.standardOutput = pipe
         process.standardError = FileHandle.nullDevice
 
+        let semaphore = DispatchSemaphore(value: 0)
+        process.terminationHandler = { _ in semaphore.signal() }
+
         do {
             try process.run()
 
             // タイムアウト付きで待機（1秒）
-            let deadline = Date().addingTimeInterval(1.0)
-            while process.isRunning && Date() < deadline {
-                Thread.sleep(forTimeInterval: 0.01)
-            }
-
-            if process.isRunning {
+            if semaphore.wait(timeout: .now() + 1.0) == .timedOut {
                 process.terminate()
                 Log.git.warning("git \(args.joined(separator: " "), privacy: .public) がタイムアウトしました")
                 return nil
