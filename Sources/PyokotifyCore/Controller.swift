@@ -306,50 +306,9 @@ extension PyokotifyController {
         guard let cwd = config.cwd, let bundleId = config.getCallerBundleId() else {
             return false
         }
-
-        let folderName = (cwd as NSString).lastPathComponent
-        guard !folderName.isEmpty else { return false }
-
         let apps = NSRunningApplication.runningApplications(withBundleIdentifier: bundleId)
         guard let app = apps.first else { return false }
-
-        let pid = app.processIdentifier
-        let axApp = AXUIElementCreateApplication(pid)
-
-        var windowsRef: CFTypeRef?
-        let result = AXUIElementCopyAttributeValue(axApp, kAXWindowsAttribute as CFString, &windowsRef)
-
-        guard result == .success, let windows = windowsRef as? [AXUIElement] else {
-            return false
-        }
-
-        // フルパスでマッチするウィンドウを優先的に探す（Ghostty等）
-        for window in windows {
-            var titleRef: CFTypeRef?
-            AXUIElementCopyAttributeValue(window, kAXTitleAttribute as CFString, &titleRef)
-
-            if let title = titleRef as? String, title.contains(cwd) {
-                WindowDetectorUtils.moveWindowToCurrentSpace(window)
-                AXUIElementPerformAction(window, kAXRaiseAction as CFString)
-                app.activate(options: [.activateAllWindows, .activateIgnoringOtherApps])
-                return true
-            }
-        }
-
-        // フォールバック: フォルダ名でマッチ（VSCode等）
-        for window in windows {
-            var titleRef: CFTypeRef?
-            AXUIElementCopyAttributeValue(window, kAXTitleAttribute as CFString, &titleRef)
-
-            if let title = titleRef as? String, title.contains(folderName) {
-                WindowDetectorUtils.moveWindowToCurrentSpace(window)
-                AXUIElementPerformAction(window, kAXRaiseAction as CFString)
-                app.activate(options: [.activateAllWindows, .activateIgnoringOtherApps])
-                return true
-            }
-        }
-
-        return false
+        return WindowDetectorUtils.focusWindowInApp(app, matchingCwd: cwd)
     }
 }
 

@@ -31,19 +31,12 @@ public enum CmuxWindowDetector {
         for bundleId in bundleIds {
             let apps = NSRunningApplication.runningApplications(withBundleIdentifier: bundleId)
             if let app = apps.first {
-                // cwdでウィンドウマッチを試みる
-                if let cwd = cwd {
-                    if WindowDetectorUtils.focusWindowInApp(app, matchingTitle: cwd) {
-                        focused = true
-                        break
-                    }
-                    let folderName = (cwd as NSString).lastPathComponent
-                    if !folderName.isEmpty,
-                        WindowDetectorUtils.focusWindowInApp(app, matchingTitle: folderName)
-                    {
-                        focused = true
-                        break
-                    }
+                // cwdでウィンドウマッチを試みる（フルパス → フォルダ名の順）
+                if let cwd = cwd,
+                    WindowDetectorUtils.focusWindowInApp(app, matchingCwd: cwd)
+                {
+                    focused = true
+                    break
                 }
                 app.activate(options: [.activateIgnoringOtherApps])
                 focused = true

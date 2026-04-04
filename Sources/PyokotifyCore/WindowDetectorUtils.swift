@@ -171,6 +171,19 @@ public enum WindowDetectorUtils {
 
     // MARK: - ウィンドウフォーカス
 
+    /// cwdでフルパスマッチ → フォルダ名マッチの順でウィンドウをフォーカス
+    ///
+    /// 各Detectorで繰り返し現れる「まずcwd全体でマッチ、次にlastPathComponentで再試行」
+    /// というパターンを一箇所に集約したもの。
+    /// - Returns: どちらかのマッチでフォーカスできた場合はtrue
+    @discardableResult
+    public static func focusWindowInApp(_ app: NSRunningApplication, matchingCwd cwd: String) -> Bool {
+        if focusWindowInApp(app, matchingTitle: cwd) { return true }
+        let folderName = (cwd as NSString).lastPathComponent
+        guard !folderName.isEmpty else { return false }
+        return focusWindowInApp(app, matchingTitle: folderName)
+    }
+
     /// アプリ内でタイトルにマッチするウィンドウをフォーカス
     /// - Returns: マッチしてフォーカスできた場合はtrue
     @discardableResult
