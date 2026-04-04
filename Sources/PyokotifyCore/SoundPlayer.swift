@@ -25,7 +25,7 @@ public class SoundPlayer {
             audioPlayer?.play()
             return true
         } catch {
-            print("サウンド再生エラー: \(error.localizedDescription)")
+            Log.sound.error("サウンド再生エラー: \(error.localizedDescription, privacy: .public)")
             return false
         }
     }

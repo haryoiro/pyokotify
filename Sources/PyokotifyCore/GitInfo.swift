@@ -49,14 +49,19 @@ public struct GitInfo {
 
             if process.isRunning {
                 process.terminate()
+                Log.git.warning("git \(args.joined(separator: " "), privacy: .public) がタイムアウトしました")
                 return nil
             }
 
-            guard process.terminationStatus == 0 else { return nil }
+            guard process.terminationStatus == 0 else {
+                Log.git.debug("git \(args.joined(separator: " "), privacy: .public) が終了コード \(process.terminationStatus) で失敗しました")
+                return nil
+            }
 
             let data = pipe.fileHandleForReading.readDataToEndOfFile()
             return String(data: data, encoding: .utf8)
         } catch {
+            Log.git.error("git \(args.joined(separator: " "), privacy: .public) の起動に失敗: \(error.localizedDescription, privacy: .public)")
             return nil
         }
     }

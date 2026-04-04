@@ -22,7 +22,7 @@ public class PyokotifyController {
 
     public func run() {
         guard let screen = NSScreen.main else {
-            print("エラー: スクリーンが見つかりません")
+            Log.app.fault("スクリーンが見つかりません")
             NSApp.terminate(nil)
             return
         }
@@ -397,7 +397,7 @@ public class PyokotifyAppDelegate: NSObject, NSApplicationDelegate {
         // 5. 画像読み込み
         let imagePath = (config.imagePath as NSString).expandingTildeInPath
         guard let image = NSImage(contentsOfFile: imagePath) else {
-            print("エラー: 画像を読み込めません: \(config.imagePath)")
+            Log.app.error("画像を読み込めません: \(config.imagePath, privacy: .public)")
             NSApp.terminate(nil)
             return
         }

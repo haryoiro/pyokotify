@@ -169,18 +169,6 @@ public enum WindowDetectorUtils {
         return true
     }
 
-    // MARK: - デバッグ出力
-
-    private static var debugEnabled: Bool {
-        ProcessInfo.processInfo.environment["PYOKOTIFY_DEBUG"] != nil
-    }
-
-    private static func debug(_ message: String) {
-        if debugEnabled {
-            fputs("[pyokotify] \(message)\n", stderr)
-        }
-    }
-
     // MARK: - ウィンドウフォーカス
 
     /// アプリ内でタイトルにマッチするウィンドウをフォーカス
@@ -190,44 +178,45 @@ public enum WindowDetectorUtils {
         let pid = app.processIdentifier
         let axApp = AXUIElementCreateApplication(pid)
 
-        debug("focusWindowInApp: app=\(app.localizedName ?? "unknown"), pid=\(pid), titlePart=\(titlePart)")
+        let appName = app.localizedName ?? "unknown"
+        Log.focus.debug("focusWindowInApp: app=\(appName, privacy: .public), pid=\(pid), titlePart=\(titlePart, privacy: .public)")
 
         var windowsRef: CFTypeRef?
         let result = AXUIElementCopyAttributeValue(axApp, kAXWindowsAttribute as CFString, &windowsRef)
 
         guard result == .success, let windows = windowsRef as? [AXUIElement] else {
-            debug("  -> AXUIElementCopyAttributeValue failed: \(result.rawValue)")
+            Log.focus.warning("AXUIElementCopyAttributeValue 失敗: \(result.rawValue) (app=\(appName, privacy: .public))")
             return false
         }
 
-        debug("  -> found \(windows.count) windows")
+        Log.focus.debug("  -> ウィンドウ数: \(windows.count) (app=\(appName, privacy: .public))")
 
         for window in windows {
             var titleRef: CFTypeRef?
             AXUIElementCopyAttributeValue(window, kAXTitleAttribute as CFString, &titleRef)
             let title = titleRef as? String ?? "(no title)"
-            debug("  -> window title: \(title)")
+            Log.focus.debug("  -> ウィンドウタイトル: \(title, privacy: .public)")
 
             if title.contains(titlePart) {
-                debug("  -> MATCH! attempting to focus...")
+                Log.focus.debug("  -> マッチ: \(title, privacy: .public) — フォーカス試行中")
 
                 // ウィンドウを現在のSpaceに移動（通常のSpaceの場合）
                 let moved = moveWindowToCurrentSpace(window)
-                debug("  -> moveWindowToCurrentSpace: \(moved)")
+                Log.focus.debug("  -> moveWindowToCurrentSpace: \(moved)")
 
                 // ウィンドウを前面に
                 let raised = AXUIElementPerformAction(window, kAXRaiseAction as CFString)
-                debug("  -> AXRaiseAction: \(raised.rawValue)")
+                Log.focus.debug("  -> AXRaiseAction: \(raised.rawValue)")
 
                 // アプリをアクティブ化（全画面Spaceの場合はこれでSpace移動される）
                 let activated = app.activate(options: [.activateAllWindows, .activateIgnoringOtherApps])
-                debug("  -> activate: \(activated)")
+                Log.focus.debug("  -> activate: \(activated)")
 
                 return true
             }
         }
 
-        debug("  -> no matching window found")
+        Log.focus.debug("  -> マッチするウィンドウが見つかりません (titlePart=\(titlePart, privacy: .public))")
         return false
     }
 

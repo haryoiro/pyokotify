@@ -490,6 +490,7 @@ public struct ClaudeHooksContext {
             let input = try decoder.decode(ClaudeHooksInput.self, from: inputData)
             return ClaudeHooksContext(from: input)
         } catch {
+            Log.hooks.error("Claude Code JSON のデコードに失敗: \(error.localizedDescription, privacy: .public)")
             return nil
         }
     }
@@ -720,6 +721,7 @@ public struct HooksContext {
 
         // JSONを辞書として解析して自動検出
         guard let json = try? JSONSerialization.jsonObject(with: inputData) as? [String: Any] else {
+            Log.hooks.error("標準入力のJSONパースに失敗しました (入力サイズ: \(inputData.count) bytes)")
             return nil
         }
 
@@ -756,7 +758,8 @@ public struct HooksContext {
 
     /// GitHub Copilot CLIの入力を解析
     private static func parseCopilotInput(from data: Data, json: [String: Any]) -> (CopilotHooksInput, CopilotHooksEvent)? {
-        guard let input = try? JSONDecoder().decode(CopilotHooksInput.self, from: data) else {
+        guard let input = (try? JSONDecoder().decode(CopilotHooksInput.self, from: data)) else {
+            Log.hooks.error("GitHub Copilot CLI JSON のデコードに失敗しました")
             return nil
         }
 
@@ -827,6 +830,7 @@ extension ClaudeHooksContext {
             let input = try decoder.decode(ClaudeHooksInput.self, from: data)
             return ClaudeHooksContext(from: input)
         } catch {
+            Log.hooks.error("ClaudeHooksInput のデコードに失敗: \(error.localizedDescription, privacy: .public)")
             return nil
         }
     }
