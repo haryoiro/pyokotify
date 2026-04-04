@@ -170,7 +170,7 @@ extension PyokotifyConfig {
             case "--auto-click":
                 config.autoClick = true
             default:
-                break
+                Log.app.warning("不明なオプション: \(arguments[i], privacy: .public)")
             }
             i += 1
         }
@@ -187,7 +187,8 @@ extension PyokotifyConfig {
             if case .helpRequested = error {
                 printUsage()
             } else {
-                print("エラー: \(error.localizedDescription)")
+                Log.app.error("\(error.localizedDescription, privacy: .public)")
+                fputs("エラー: \(error.localizedDescription)\n", stderr)
                 printUsage()
             }
             return nil
