@@ -132,7 +132,7 @@ struct ConfigTests {
             "-c", "vscode",
             "--cwd", "/path/to/project",
             "-r",
-            "--random-direction",
+            "--random-direction"
         ])
         let config = try result.get()
 

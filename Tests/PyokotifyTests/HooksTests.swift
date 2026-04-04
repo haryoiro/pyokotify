@@ -8,13 +8,13 @@ struct ClaudeCodeHooksTests {
 
     @Test("JSONを正しく解析")
     func parseJson() throws {
-        let json = """
+        let json = Data("""
             {
                 "hook_event_name": "Notification",
                 "cwd": "/path/to/project",
                 "notification_type": "permission_prompt"
             }
-            """.data(using: .utf8)!
+            """.utf8)
 
         let input = try JSONDecoder().decode(ClaudeHooksInput.self, from: json)
         #expect(input.hookEventName == .notification)
@@ -24,12 +24,12 @@ struct ClaudeCodeHooksTests {
 
     @Test("Stopイベントを正しく解析")
     func parseStopEvent() throws {
-        let json = """
+        let json = Data("""
             {
                 "hook_event_name": "Stop",
                 "cwd": "/path/to/project"
             }
-            """.data(using: .utf8)!
+            """.utf8)
 
         let input = try JSONDecoder().decode(ClaudeHooksInput.self, from: json)
         #expect(input.hookEventName == .stop)
@@ -37,13 +37,13 @@ struct ClaudeCodeHooksTests {
 
     @Test("PreToolUseイベントを正しく解析")
     func parsePreToolUseEvent() throws {
-        let json = """
+        let json = Data("""
             {
                 "hook_event_name": "PreToolUse",
                 "cwd": "/path/to/project",
                 "tool_name": "Bash"
             }
-            """.data(using: .utf8)!
+            """.utf8)
 
         let input = try JSONDecoder().decode(ClaudeHooksInput.self, from: json)
         #expect(input.hookEventName == .preToolUse)
@@ -52,12 +52,12 @@ struct ClaudeCodeHooksTests {
 
     @Test("未知のイベントはunknownになる")
     func parseUnknownEvent() throws {
-        let json = """
+        let json = Data("""
             {
                 "hook_event_name": "SomeNewEvent",
                 "cwd": "/path/to/project"
             }
-            """.data(using: .utf8)!
+            """.utf8)
 
         let input = try JSONDecoder().decode(ClaudeHooksInput.self, from: json)
         #expect(input.hookEventName == .unknown)
@@ -107,14 +107,14 @@ struct CopilotHooksTests {
 
     @Test("Copilot sessionStart JSONを正しく解析")
     func parseSessionStart() throws {
-        let json = """
+        let json = Data("""
             {
                 "timestamp": 1704614400000,
                 "cwd": "/path/to/project",
                 "source": "new",
                 "initialPrompt": "Hello"
             }
-            """.data(using: .utf8)!
+            """.utf8)
 
         let input = try JSONDecoder().decode(CopilotHooksInput.self, from: json)
         #expect(input.timestamp == 1704614400000)
@@ -125,14 +125,14 @@ struct CopilotHooksTests {
 
     @Test("Copilot preToolUse JSONを正しく解析")
     func parsePreToolUse() throws {
-        let json = """
+        let json = Data("""
             {
                 "timestamp": 1704614400000,
                 "cwd": "/path/to/project",
                 "toolName": "bash",
                 "toolArgs": "{\\"command\\":\\"ls\\"}"
             }
-            """.data(using: .utf8)!
+            """.utf8)
 
         let input = try JSONDecoder().decode(CopilotHooksInput.self, from: json)
         #expect(input.toolName == "bash")
@@ -141,7 +141,7 @@ struct CopilotHooksTests {
 
     @Test("Copilot errorOccurred JSONを正しく解析")
     func parseErrorOccurred() throws {
-        let json = """
+        let json = Data("""
             {
                 "timestamp": 1704614400000,
                 "cwd": "/path/to/project",
@@ -150,7 +150,7 @@ struct CopilotHooksTests {
                     "name": "Error"
                 }
             }
-            """.data(using: .utf8)!
+            """.utf8)
 
         let input = try JSONDecoder().decode(CopilotHooksInput.self, from: json)
         #expect(input.error?.message == "Something went wrong")

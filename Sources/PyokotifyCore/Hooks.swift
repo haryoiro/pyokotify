@@ -146,10 +146,10 @@ public enum NotificationType: String, Codable {
 
 /// SessionStart イベントのソース種別
 public enum SessionStartSource: String, Codable {
-    case startup = "startup"
-    case resume = "resume"
-    case clear = "clear"
-    case compact = "compact"
+    case startup
+    case resume
+    case clear
+    case compact
     case unknown
 
     public init(from decoder: Decoder) throws {
@@ -162,11 +162,11 @@ public enum SessionStartSource: String, Codable {
 
 /// SessionEnd イベントの終了理由
 public enum SessionEndReason: String, Codable {
-    case clear = "clear"
-    case logout = "logout"
+    case clear
+    case logout
     case promptInputExit = "prompt_input_exit"
     case bypassPermissionsDisabled = "bypass_permissions_disabled"
-    case other = "other"
+    case other
     case unknown
 
     public init(from decoder: Decoder) throws {
@@ -179,8 +179,8 @@ public enum SessionEndReason: String, Codable {
 
 /// PreCompact イベントのトリガー種別
 public enum PreCompactTrigger: String, Codable {
-    case manual = "manual"
-    case auto = "auto"
+    case manual
+    case auto
     case unknown
 
     public init(from decoder: Decoder) throws {

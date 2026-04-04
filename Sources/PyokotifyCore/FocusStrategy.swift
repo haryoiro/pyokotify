@@ -97,25 +97,21 @@ public enum FocusStrategyResolver {
         let jetBrainsNames = [
             "idea", "intellij", "appcode", "clion", "webstorm",
             "pycharm", "phpstorm", "goland", "rubymine", "rider",
-            "datagrip", "fleet",
+            "datagrip", "fleet"
         ]
 
         if let caller = callerApp?.lowercased() {
-            for name in jetBrainsNames {
-                if caller.contains(name) { return true }
-            }
+            for name in jetBrainsNames where caller.contains(name) { return true }
             return false
         }
 
         if let bundleId = env["__CFBundleIdentifier"],
-            bundleId.contains("jetbrains")
-        {
+            bundleId.contains("jetbrains") {
             return true
         }
 
         if let termEmulator = env["TERMINAL_EMULATOR"],
-            termEmulator.contains("JetBrains")
-        {
+            termEmulator.contains("JetBrains") {
             return true
         }
 

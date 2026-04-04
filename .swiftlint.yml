@@ -1,0 +1,46 @@
+included:
+  - Sources
+  - Tests
+
+excluded:
+  - .build
+
+line_length:
+  warning: 150
+  error: 200
+
+file_length:
+  warning: 600
+  error: 1000
+
+function_body_length:
+  warning: 70
+  error: 120
+
+cyclomatic_complexity:
+  warning: 15
+  # generateDefaultMessage の大きなswitchは設計上やむを得ない
+  error: 40
+
+identifier_name:
+  # 数値計算・座標・ループカウンタ・システムAPI等の慣用的な短い変数名を許可
+  allowed_symbols: ["_"]
+  min_length:
+    warning: 1
+    error: 1
+  excluded:
+    - i
+    - x
+    - y
+    - t
+    - fd
+    - dx
+    - dy
+
+large_tuple:
+  warning: 3
+  error: 4
+
+type_body_length:
+  warning: 300
+  error: 500

@@ -163,7 +163,7 @@ public class PyokotifyView: NSView {
             imageView.topAnchor.constraint(equalTo: topAnchor),
             imageView.bottomAnchor.constraint(equalTo: bottomAnchor),
             imageView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            imageView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            imageView.trailingAnchor.constraint(equalTo: trailingAnchor)
         ])
     }
 

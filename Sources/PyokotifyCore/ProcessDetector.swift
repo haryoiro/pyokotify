@@ -45,8 +45,7 @@ public enum ProcessDetector {
 
         // cmuxはTERM_PROGRAM=ghosttyを設定するが、CMUX_WORKSPACE_IDで区別可能
         if termProgram == "ghostty"
-            && ProcessInfo.processInfo.environment["CMUX_WORKSPACE_ID"] != nil
-        {
+            && ProcessInfo.processInfo.environment["CMUX_WORKSPACE_ID"] != nil {
             return "cmux"
         }
 

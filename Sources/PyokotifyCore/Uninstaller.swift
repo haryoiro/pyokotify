@@ -50,13 +50,11 @@ public struct Uninstaller {
         }
 
         // ファイル削除
-        for file in filesToDelete {
-            if FileManager.default.fileExists(atPath: file) {
-                do {
-                    try FileManager.default.removeItem(atPath: file)
-                } catch {
-                    return .failure(.deletionFailed(file, error))
-                }
+        for file in filesToDelete where FileManager.default.fileExists(atPath: file) {
+            do {
+                try FileManager.default.removeItem(atPath: file)
+            } catch {
+                return .failure(.deletionFailed(file, error))
             }
         }
 

@@ -33,8 +33,7 @@ public enum CmuxWindowDetector {
             if let app = apps.first {
                 // cwdでウィンドウマッチを試みる（フルパス → フォルダ名の順）
                 if let cwd = cwd,
-                    WindowDetectorUtils.focusWindowInApp(app, matchingCwd: cwd)
-                {
+                    WindowDetectorUtils.focusWindowInApp(app, matchingCwd: cwd) {
                     focused = true
                     break
                 }
@@ -87,7 +86,7 @@ public enum CmuxWindowDetector {
         let defaults = [
             "/tmp/cmux.sock",
             "/tmp/cmux-nightly.sock",
-            "/tmp/cmux-debug.sock",
+            "/tmp/cmux-debug.sock"
         ]
         return defaults.first { FileManager.default.fileExists(atPath: $0) } ?? ""
     }

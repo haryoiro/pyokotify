@@ -84,14 +84,12 @@ public enum TmuxWindowDetector {
 
         // 実際のターミナルアプリを特定
         if let detected = detectRealTerminalApp(),
-            let bundleId = resolveBundleId(detected)
-        {
+            let bundleId = resolveBundleId(detected) {
             let apps = NSRunningApplication.runningApplications(withBundleIdentifier: bundleId)
             if let app = apps.first {
                 // cwdでウィンドウマッチを試みる（フルパス → フォルダ名の順）
                 if let cwd = cwd,
-                    WindowDetectorUtils.focusWindowInApp(app, matchingCwd: cwd)
-                {
+                    WindowDetectorUtils.focusWindowInApp(app, matchingCwd: cwd) {
                     restoreTmuxPane()
                     return true
                 }
@@ -126,7 +124,7 @@ public enum TmuxWindowDetector {
         WindowDetectorUtils.findBinary("tmux", fallbacks: [
             "/opt/homebrew/bin/tmux",
             "/usr/local/bin/tmux",
-            "/usr/bin/tmux",
+            "/usr/bin/tmux"
         ])
     }
 
@@ -186,8 +184,7 @@ public enum TmuxWindowDetector {
         let displayArgs = base + ["display-message", "-t", paneId, "-p", "#{session_name}:#{window_index}"]
         if let target = WindowDetectorUtils.runCommand(tmux, arguments: displayArgs)?
             .trimmingCharacters(in: .whitespacesAndNewlines),
-            !target.isEmpty
-        {
+            !target.isEmpty {
             Log.focus.debug("  -> select-window -t \(target, privacy: .public)")
             let selectWindowArgs = base + ["select-window", "-t", target]
             _ = WindowDetectorUtils.runCommand(tmux, arguments: selectWindowArgs)
@@ -209,8 +206,7 @@ public enum TmuxWindowDetector {
         }
         // バンドルIDそのもの（未知アプリの汎用検出結果）
         if identifier.contains("."),
-            !NSRunningApplication.runningApplications(withBundleIdentifier: identifier).isEmpty
-        {
+            !NSRunningApplication.runningApplications(withBundleIdentifier: identifier).isEmpty {
             return identifier
         }
         return nil

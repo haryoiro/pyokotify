@@ -36,7 +36,7 @@ public enum TemplateExpander {
             "$branch": context.branch,
             "$cwd": context.cwd,
             "$event": context.eventName,
-            "$tool": context.toolName,
+            "$tool": context.toolName
         ]
 
         return variables.reduce(template) { result, pair in

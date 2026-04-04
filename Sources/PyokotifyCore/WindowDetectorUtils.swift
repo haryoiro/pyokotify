@@ -98,16 +98,14 @@ public enum WindowDetectorUtils {
 
         guard sysctl(&mib, 4, &procs, &size, nil, 0) == 0 else { return nil }
 
-        for proc in procs {
-            if proc.kp_eproc.e_tdev == ttyDev {
-                let name = withUnsafePointer(to: proc.kp_proc.p_comm) { ptr in
-                    ptr.withMemoryRebound(to: CChar.self, capacity: Int(MAXCOMLEN)) { charPtr in
-                        String(cString: charPtr)
-                    }
+        for proc in procs where proc.kp_eproc.e_tdev == ttyDev {
+            let name = withUnsafePointer(to: proc.kp_proc.p_comm) { ptr in
+                ptr.withMemoryRebound(to: CChar.self, capacity: Int(MAXCOMLEN)) { charPtr in
+                    String(cString: charPtr)
                 }
-                if shellNames.contains(name) {
-                    return proc.kp_proc.p_pid
-                }
+            }
+            if shellNames.contains(name) {
+                return proc.kp_proc.p_pid
             }
         }
         return nil
@@ -247,10 +245,8 @@ public enum WindowDetectorUtils {
     public static func focusWindowByTitle(_ titlePart: String, bundleIds: [String]) -> Bool {
         for bundleId in bundleIds {
             let apps = NSRunningApplication.runningApplications(withBundleIdentifier: bundleId)
-            for app in apps {
-                if focusWindowInApp(app, matchingTitle: titlePart) {
-                    return true
-                }
+            for app in apps where focusWindowInApp(app, matchingTitle: titlePart) {
+                return true
             }
         }
         return false
@@ -278,12 +274,10 @@ public enum WindowDetectorUtils {
         let output = runCommand("/usr/sbin/lsof", arguments: ["-U"])
         guard let output = output else { return nil }
 
-        for line in output.components(separatedBy: "\n") {
-            if line.contains(socketPathPart) {
-                let parts = line.components(separatedBy: .whitespaces).filter { !$0.isEmpty }
-                if parts.count >= 2, let pid = Int32(parts[1]) {
-                    return pid
-                }
+        for line in output.components(separatedBy: "\n") where line.contains(socketPathPart) {
+            let parts = line.components(separatedBy: .whitespaces).filter { !$0.isEmpty }
+            if parts.count >= 2, let pid = Int32(parts[1]) {
+                return pid
             }
         }
         return nil

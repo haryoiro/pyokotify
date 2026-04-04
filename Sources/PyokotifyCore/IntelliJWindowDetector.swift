@@ -24,15 +24,12 @@ public enum IntelliJWindowDetector {
 
         // 方法2: __CFBundleIdentifier + 親プロセスのcwdからプロジェクトを特定
         if let bundleId = ProcessInfo.processInfo.environment["__CFBundleIdentifier"],
-            bundleIds.contains(bundleId)
-        {
+            bundleIds.contains(bundleId) {
             if let parentCwd = WindowDetectorUtils.getParentCwd() {
                 let projectName = (parentCwd as NSString).lastPathComponent
                 let apps = NSRunningApplication.runningApplications(withBundleIdentifier: bundleId)
-                for app in apps {
-                    if WindowDetectorUtils.focusWindowInApp(app, matchingTitle: projectName) {
-                        return true
-                    }
+                for app in apps where WindowDetectorUtils.focusWindowInApp(app, matchingTitle: projectName) {
+                    return true
                 }
             }
             // バンドルIDが分かっているのでそのアプリにフォーカス

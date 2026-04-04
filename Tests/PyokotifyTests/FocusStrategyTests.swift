@@ -25,7 +25,7 @@ struct FocusStrategyTests {
             cwd: "/path",
             env: [
                 "CMUX_WORKSPACE_ID": "ws-123",
-                "TMUX": "/tmp/tmux-501/default,1,0",
+                "TMUX": "/tmp/tmux-501/default,1,0"
             ]
         )
         #expect(result == .cmux(cwd: "/path"))
@@ -124,7 +124,7 @@ struct FocusStrategyTests {
             cwd: "/path",
             env: [
                 "TERM_PROGRAM": "ghostty",
-                "VSCODE_GIT_IPC_HANDLE": "/tmp/vscode-git-abc.sock",
+                "VSCODE_GIT_IPC_HANDLE": "/tmp/vscode-git-abc.sock"
             ]
         )
         // TERM_PROGRAM=ghosttyなのでVSCodeではない → generic
@@ -188,7 +188,7 @@ struct FocusStrategyTests {
         let names = [
             "idea", "intellij", "appcode", "clion", "webstorm",
             "pycharm", "phpstorm", "goland", "rubymine", "rider",
-            "datagrip", "fleet",
+            "datagrip", "fleet"
         ]
         for name in names {
             let result = FocusStrategyResolver.determine(
@@ -282,7 +282,7 @@ struct FocusStrategyTests {
             env: [
                 "CMUX_WORKSPACE_ID": "ws-1",
                 "TMUX": "/tmp/tmux-501/default,1,0",
-                "VSCODE_GIT_IPC_HANDLE": "/tmp/sock",
+                "VSCODE_GIT_IPC_HANDLE": "/tmp/sock"
             ]
         )
         #expect(cmuxResult == .cmux(cwd: "/path"))
@@ -293,7 +293,7 @@ struct FocusStrategyTests {
             cwd: "/path",
             env: [
                 "TMUX": "/tmp/tmux-501/default,1,0",
-                "VSCODE_GIT_IPC_HANDLE": "/tmp/sock",
+                "VSCODE_GIT_IPC_HANDLE": "/tmp/sock"
             ]
         )
         #expect(tmuxResult == .tmux(cwd: "/path"))
@@ -304,7 +304,7 @@ struct FocusStrategyTests {
             cwd: "/path",
             env: [
                 "VSCODE_GIT_IPC_HANDLE": "/tmp/sock",
-                "__CFBundleIdentifier": "com.jetbrains.intellij",
+                "__CFBundleIdentifier": "com.jetbrains.intellij"
             ]
         )
         #expect(vscodeResult == .vscode(cwd: "/path"))

@@ -5,9 +5,9 @@ import Foundation
 
 /// キャラクターの出現方向
 public enum PeekDirection: String, CaseIterable, Sendable {
-    case bottom = "bottom"
-    case left = "left"
-    case right = "right"
+    case bottom
+    case left
+    case right
 
     public static func random() -> PeekDirection {
         allCases.randomElement() ?? .bottom

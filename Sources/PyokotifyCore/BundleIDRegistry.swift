@@ -28,7 +28,7 @@ public enum BundleIDRegistry {
         "com.jetbrains.rider-EAP": "rider",
         "com.jetbrains.datagrip": "datagrip",
         "com.jetbrains.datagrip-EAP": "datagrip",
-        "com.jetbrains.fleet": "fleet",
+        "com.jetbrains.fleet": "fleet"
     ]
 
     /// JetBrains IDE のバンドルID一覧
@@ -41,7 +41,7 @@ public enum BundleIDRegistry {
     /// VSCode のバンドルID
     public static let vscodeBundleIds: [String] = [
         "com.microsoft.VSCode",
-        "com.microsoft.VSCodeInsiders",
+        "com.microsoft.VSCodeInsiders"
     ]
 
     // MARK: - Terminals
@@ -59,7 +59,7 @@ public enum BundleIDRegistry {
         "org.tabby": "Tabby",
         "com.mitchellh.ghostty": "ghostty",
         "com.cmuxterm.app": "cmux",
-        "com.cmuxterm.app.nightly": "cmux",
+        "com.cmuxterm.app.nightly": "cmux"
     ]
 
     /// 全ターミナル関連アプリのバンドルID → TERM_PROGRAM名 マッピング（JetBrains含む）
@@ -99,6 +99,6 @@ public enum BundleIDRegistry {
         "rubymine": "com.jetbrains.rubymine",
         "rider": "com.jetbrains.rider",
         "datagrip": "com.jetbrains.datagrip",
-        "fleet": "com.jetbrains.fleet",
+        "fleet": "com.jetbrains.fleet"
     ]
 }

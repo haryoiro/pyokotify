@@ -20,8 +20,7 @@ public struct GitInfo {
     private static func getRepositoryName(cwd: String) -> String? {
         // まずgit rev-parseでリポジトリルートを取得
         if let root = runGitCommand(["rev-parse", "--show-toplevel"], cwd: cwd)?
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        {
+            .trimmingCharacters(in: .whitespacesAndNewlines) {
             return (root as NSString).lastPathComponent
         }
         // Gitリポジトリでない場合はcwdのディレクトリ名を返す
