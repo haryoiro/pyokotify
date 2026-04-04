@@ -219,7 +219,16 @@ public enum WindowDetectorUtils {
 
                 // ウィンドウを前面に
                 let raised = AXUIElementPerformAction(window, kAXRaiseAction as CFString)
-                Log.focus.debug("  -> AXRaiseAction: \(raised.rawValue)")
+                switch raised {
+                case .success:
+                    Log.focus.debug("  -> AXRaiseAction: success")
+                case .attributeUnsupported:
+                    // このアプリはkAXRaiseActionを実装していない（Electron系など）
+                    // activate()で代替されるため動作上は問題なし
+                    Log.focus.debug("  -> AXRaiseAction: attributeUnsupported (スキップ)")
+                default:
+                    Log.focus.warning("  -> AXRaiseAction: \(raised.rawValue) (\(appName, privacy: .public))")
+                }
 
                 // アプリをアクティブ化（全画面Spaceの場合はこれでSpace移動される）
                 let activated = app.activate(options: [.activateAllWindows, .activateIgnoringOtherApps])
