@@ -10,6 +10,9 @@ let package = Package(
         .executable(name: "pyokotify", targets: ["pyokotify"]),
         .library(name: "PyokotifyCore", targets: ["PyokotifyCore"]),
     ],
+    dependencies: [
+        .package(url: "https://github.com/haryoiro/foxus", from: "0.0.4"),
+    ],
     targets: [
         // メインの実行ファイル
         .executableTarget(
@@ -20,12 +23,16 @@ let package = Package(
         // テスト可能なコアロジック
         .target(
             name: "PyokotifyCore",
+            dependencies: [.product(name: "Foxus", package: "foxus")],
             path: "Sources/PyokotifyCore"
         ),
         // テスト
         .testTarget(
             name: "PyokotifyTests",
-            dependencies: ["PyokotifyCore"],
+            dependencies: [
+                "PyokotifyCore",
+                .product(name: "Foxus", package: "foxus"),
+            ],
             path: "Tests/PyokotifyTests"
         ),
     ]

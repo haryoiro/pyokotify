@@ -1,5 +1,7 @@
 import OSLog
 
+// MARK: - PyokotifyCore Logging
+
 /// アプリ全体で使用するロガー
 ///
 /// Console.app または以下のコマンドで確認できる:

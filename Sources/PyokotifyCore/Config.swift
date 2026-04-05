@@ -1,3 +1,4 @@
+import Foxus
 import Foundation
 
 // MARK: - Configuration
@@ -66,19 +67,19 @@ public struct PyokotifyConfig {
     }
 }
 
-// MARK: - Terminal Bundle ID Mapping
+// MARK: - Caller Bundle ID Resolution
 
 extension PyokotifyConfig {
-    /// TERM_PROGRAM → バンドルID のマッピング
-    public static var termProgramToBundleId: [String: String] { BundleIDRegistry.termProgramToBundleId }
-
+    /// callerApp から バンドルID を解決する
+    ///
+    /// Foxus.focus() 失敗時のフォールバックで NSRunningApplication を直接アクティブ化するために使用。
     public func getCallerBundleId() -> String? {
         guard let caller = callerApp else { return nil }
-        // まず既知のTERM_PROGRAM名として逆引き（--caller オプション / 既知アプリ）
-        if let bundleId = Self.termProgramToBundleId[caller] {
+        // 既知のTERM_PROGRAM名 → バンドルID
+        if let bundleId = BundleIDRegistry.termProgramToBundleId[caller] {
             return bundleId
         }
-        // callerがバンドルIDそのもの（汎用プロセスツリー検出の結果）
+        // callerがバンドルIDそのもの（プロセスツリー検出の結果はドット区切り）
         if caller.contains(".") {
             return caller
         }
