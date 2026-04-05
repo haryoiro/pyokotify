@@ -129,14 +129,14 @@ cwd: /path/to/myproject → プロジェクト名: myproject
 
 ### 方法3: worktreeの親リポジトリ名でマッチング
 
-cwdが`.worktrees`を含む場合、親リポジトリ名を抽出してマッチングします。
+cwdが`.worktrees`を含む場合、`/.worktrees/`より前のパスコンポーネントを親リポジトリ名として抽出し、マッチングします。
 
 ```
-cwd: /path/to/jigpo/.worktrees/feature/branch → 親リポジトリ名: jigpo
-ウィンドウタイトル: "main.swift — jigpo" → マッチ
+cwd: /path/to/myrepo/.worktrees/feature/branch → 親リポジトリ名: myrepo
+ウィンドウタイトル: "main.swift — myrepo" → マッチ
 ```
 
-**利点**: worktree内で作業している場合でも親ウィンドウにフォーカスできる
+**利点**: git worktree内で作業している場合でも、メインリポジトリのVSCodeウィンドウにフォーカスできる
 **制限**: cwdが`.worktrees`パスを含む場合のみ有効
 
 ### 方法4: TTYからウィンドウタイトルを推測
