@@ -253,34 +253,8 @@ extension PyokotifyController {
     private func handleClick() {
         hideTimer?.cancel()
 
-        let strategy = FocusStrategyResolver.determine(
-            callerApp: config.callerApp,
-            cwd: config.cwd,
-            env: ProcessInfo.processInfo.environment
-        )
-
-        switch strategy {
-        case .cmux(let cwd):
-            if !CmuxWindowDetector.focusCurrentWindow(cwd: cwd) {
-                activateFallbackApp()
-            }
-        case .tmux(let cwd):
-            if !TmuxWindowDetector.focusCurrentWindow(cwd: cwd) {
-                activateFallbackApp()
-            }
-        case .vscode(let cwd):
-            if !VSCodeWindowDetector.focusCurrentWindow(cwd: cwd) {
-                activateFallbackApp()
-            }
-        case .intellij(let cwd):
-            if !IntelliJWindowDetector.focusCurrentWindow(cwd: cwd) {
-                activateFallbackApp()
-            }
-        case .generic:
-            if !focusWindowByCwd() {
-                activateFallbackApp()
-            }
-        case .fallback:
+        let result = Foxus.focus(callerApp: config.callerApp, cwd: config.cwd)
+        if !result.succeeded {
             activateFallbackApp()
         }
 
@@ -303,14 +277,7 @@ extension PyokotifyController {
         return fallbackCallerApp
     }
 
-    private func focusWindowByCwd() -> Bool {
-        guard let cwd = config.cwd, let bundleId = config.getCallerBundleId() else {
-            return false
-        }
-        let apps = NSRunningApplication.runningApplications(withBundleIdentifier: bundleId)
-        guard let app = apps.first else { return false }
-        return WindowDetectorUtils.focusWindowInApp(app, matchingCwd: cwd)
-    }
+
 }
 
 // MARK: - App Delegate
