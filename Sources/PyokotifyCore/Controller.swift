@@ -276,8 +276,6 @@ extension PyokotifyController {
         }
         return fallbackCallerApp
     }
-
-
 }
 
 // MARK: - App Delegate
@@ -304,7 +302,11 @@ public class PyokotifyAppDelegate: NSObject, NSApplicationDelegate {
             config = processHooksMode(config: config)
         }
 
-        // 3. 親プロセス自動検出（callerAppが未指定の場合）
+        // 3. 呼び出し元ターミナルを起動直後に検出して保存
+        //    クリック時には pyokotify 自身がフロントになっているため、
+        //    ここで事前キャプチャしておく必要がある。
+        //    検出結果は Foxus.focus() への callerApp ヒントと
+        //    フォールバック時の getCallerBundleId() の両方で使われる。
         if config.callerApp == nil && config.autoDetectCaller {
             config.callerApp = ProcessDetector.detectTerminalApp()
         }
