@@ -11,7 +11,7 @@ let package = Package(
         .library(name: "PyokotifyCore", targets: ["PyokotifyCore"]),
     ],
     dependencies: [
-        .package(path: "../foxus"),
+        .package(url: "https://github.com/haryoiro/foxus", from: "0.1.0"),
     ],
     targets: [
         // メインの実行ファイル
