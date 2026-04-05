@@ -1,4 +1,3 @@
-import Foxus
 import Foundation
 
 // MARK: - Configuration

@@ -1,4 +1,3 @@
-import Foxus
 import AppKit
 import ApplicationServices
 import Foundation
