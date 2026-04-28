@@ -1,18 +1,28 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version without the leading v
+        required: true
+        type: string
 
 permissions:
   contents: write
 
 jobs:
-  build:
+  release:
     runs-on: macos-15
+    env:
+      VERSION: ${{ inputs.version }}
+      RELEASE_BRANCH: release/${{ inputs.version }}
+      TAG_NAME: v${{ inputs.version }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
 
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_16.2.app
@@ -20,12 +30,47 @@ jobs:
       - name: Show Swift version
         run: swift --version
 
+      - name: Validate release version
+        run: |
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Version must look like 1.2.3 or 1.2.3-rc.1: $VERSION"
+            exit 1
+          fi
+          if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+            echo "Tag already exists: $TAG_NAME"
+            exit 1
+          fi
+
+      - name: Configure Git author
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Checkout or create release branch
+        run: |
+          if git ls-remote --exit-code --heads origin "$RELEASE_BRANCH"; then
+            git fetch origin "$RELEASE_BRANCH:$RELEASE_BRANCH"
+            git checkout "$RELEASE_BRANCH"
+          else
+            git checkout -b "$RELEASE_BRANCH"
+          fi
+
       - name: Update Version.swift
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
           sed -i '' "s/public static let current = \".*\"/public static let current = \"$VERSION\"/" Sources/PyokotifyCore/Version.swift
-          echo "Updated version to: $VERSION"
-          cat Sources/PyokotifyCore/Version.swift
+          grep "public static let current = \"$VERSION\"" Sources/PyokotifyCore/Version.swift
+
+      - name: Commit release version
+        run: |
+          if git diff --quiet -- Sources/PyokotifyCore/Version.swift; then
+            echo "Version.swift is already set to $VERSION"
+          else
+            git add Sources/PyokotifyCore/Version.swift
+            git commit -m "Prepare $TAG_NAME release"
+          fi
+
+      - name: Run tests
+        run: swift test
 
       - name: Build for Apple Silicon
         run: swift build -c release --arch arm64
@@ -45,19 +90,75 @@ jobs:
       - name: Create archive
         run: |
           cd dist
-          zip -r pyokotify-${{ github.ref_name }}-macos.zip pyokotify
+          zip -r "pyokotify-${TAG_NAME}-macos.zip" pyokotify
 
       - name: Generate checksums
         run: |
           cd dist
-          shasum -a 256 pyokotify-${{ github.ref_name }}-macos.zip > checksums.txt
+          shasum -a 256 "pyokotify-${TAG_NAME}-macos.zip" > checksums.txt
+
+      - name: Create tag
+        run: |
+          git tag -a "$TAG_NAME" -m "Release $TAG_NAME"
+          git push origin "HEAD:$RELEASE_BRANCH"
+          git push origin "$TAG_NAME"
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.TAG_NAME }}
+          target_commitish: ${{ env.RELEASE_BRANCH }}
           files: |
-            dist/pyokotify-${{ github.ref_name }}-macos.zip
+            dist/pyokotify-${{ env.TAG_NAME }}-macos.zip
             dist/checksums.txt
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update Homebrew tap
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          if [ -z "$HOMEBREW_TAP_TOKEN" ]; then
+            echo "HOMEBREW_TAP_TOKEN secret is required to update haryoiro/homebrew-tap"
+            exit 1
+          fi
+
+          ARCHIVE_NAME="pyokotify-${TAG_NAME}-macos.zip"
+          SHA256="$(cut -d ' ' -f 1 dist/checksums.txt)"
+          FORMULA_PATH="Formula/pyokotify.rb"
+
+          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/haryoiro/homebrew-tap.git" homebrew-tap
+          cd homebrew-tap
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if ! git rev-parse --verify HEAD >/dev/null 2>&1; then
+            git checkout --orphan main
+          fi
+
+          mkdir -p Formula
+          cat > "$FORMULA_PATH" << EOF
+          class Pyokotify < Formula
+            desc "macOS notification tool that peeks a character from the screen edge"
+            homepage "https://github.com/haryoiro/pyokotify"
+            url "https://github.com/haryoiro/pyokotify/releases/download/${TAG_NAME}/${ARCHIVE_NAME}"
+            sha256 "${SHA256}"
+            license "MIT"
+
+            depends_on macos: :monterey
+
+            def install
+              bin.install "pyokotify"
+            end
+
+            test do
+              assert_match "pyokotify #{version}", shell_output("#{bin}/pyokotify --version")
+            end
+          end
+          EOF
+
+          git add "$FORMULA_PATH"
+          git commit -m "Update pyokotify to ${TAG_NAME}"
+          git push origin HEAD:main
