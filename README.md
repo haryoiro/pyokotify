@@ -13,6 +13,12 @@
 
 ## インストール
 
+### Homebrew
+
+```console
+brew install haryoiro/tap/pyokotify
+```
+
 ### バイナリ
 
 ```console
